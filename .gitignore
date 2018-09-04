@@ -1,0 +1,9 @@
+*
+!*/
+!/src/wfbot.js
+!/src/utils/Util.js
+!/src/utils/Reply.js
+!/src/db/data.json
+!package.json
+!.gitignore
+!LICENSE

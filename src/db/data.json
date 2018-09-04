@@ -1,0 +1,258 @@
+{
+  "sortieTimes": [
+    { "type": "rescue", "time": 3 },
+    {
+      "type": "spy",
+      "time": 4
+    },
+    {
+      "type": "defense",
+      "time": 15
+    },
+    {
+      "type": "interception",
+      "time": 15
+    },
+    {
+      "type": "excavation",
+      "time": 15
+    },
+    {
+      "type": "survival",
+      "time": 10
+    },
+    {
+      "type": "exterminate",
+      "time": 3
+    },
+    {
+      "type": "extermination",
+      "time": 3
+    },
+    {
+      "type": "defection",
+      "time": 10
+    },
+    {
+      "type": "hijack",
+      "time": 5
+    },
+    {
+      "type": "assassination",
+      "time": 2
+    },
+    {
+      "type": "free roam",
+      "time": 5
+    },
+    {
+      "type": "hive",
+      "time": 5
+    },
+    {
+      "type": "mobile defense",
+      "time": 5
+    },
+    {
+      "type": "sabotage",
+      "time": 3
+    },
+    {
+      "type": "assault",
+      "time": 8
+    }
+  ],
+  "emojis": [
+    {
+      "modifier": "energy reduction",
+      "emoji": "🔋"
+    },
+    {
+      "modifier": "viral",
+      "emoji": "🏥"
+    },
+    {
+      "modifier": "fire",
+      "emoji": "🔥"
+    },
+    {
+      "modifier": "impact",
+      "emoji": "🔨"
+    },
+    {
+      "modifier": "slash",
+      "emoji": "🔪"
+    },
+    {
+      "modifier": "puncture",
+      "emoji": "🗡️"
+    },
+
+    {
+      "modifier": "eximus stronghold",
+      "emoji": "💪"
+    },
+    {
+      "modifier": "magnetic",
+      "emoji": "🧲"
+    },
+    {
+      "modifier": "corrosive",
+      "emoji": "☣️"
+    },
+    {
+      "modifier": "electricity",
+      "emoji": "⚡"
+    },
+    {
+      "modifier": "radiation",
+      "emoji": "☢️"
+    },
+    {
+      "modifier": "gas",
+      "emoji": "⛽"
+    },
+    {
+      "modifier": "heat",
+      "emoji": "☀️"
+    },
+    {
+      "modifier": "blast",
+      "emoji": "💥"
+    },
+    {
+      "modifier": "cold",
+      "emoji": "❄️"
+    },
+    {
+      "modifier": "toxin",
+      "emoji": "🛢️"
+    },
+    {
+      "modifier": "radiation pockets",
+      "emoji": "☢️"
+    },
+    {
+      "modifier": "electromagnetic anomalies",
+      "emoji": "💡"
+    },
+    {
+      "modifier": "dense fog",
+      "emoji": "🌫️"
+    },
+    {
+      "modifier": "augmented enemy armor",
+      "emoji": "🛡️"
+    },
+    {
+      "modifier": "cryogenic leakage",
+      "emoji": "🏂"
+    },
+    {
+      "modifier": "extreme cold",
+      "emoji": "☃️"
+    },
+    {
+      "modifier": "augmented enemy shields",
+      "emoji": "🛡️"
+    },
+    {
+      "modifier": "pistol only",
+      "emoji": "🔫"
+    },
+    {
+      "modifier": "shotgun only",
+      "emoji": "🔫"
+    },
+    {
+      "modifier": "sniper only",
+      "emoji": "🔫"
+    },
+    {
+      "modifier": "assault rifle only",
+      "emoji": "🥆"
+    },
+    {
+      "modifier": "melee only",
+      "emoji": "⚔️"
+    },
+    {
+      "modifier": "bow only",
+      "emoji": "🏹"
+    }
+  ],
+  "categories": [
+    "Skins",
+    "Gear",
+    "Glyphs",
+    "Sigils",
+    "Misc",
+    "Quests",
+    "Mods",
+    "Melee",
+    "Secondary",
+    "Pets",
+    "Archwing",
+    "Primary",
+    "Warframes",
+    "Resources",
+    "Relics",
+    "Fish",
+    "Sentinels"
+  ],
+  "default": ["fish", "gear", "skins", "arcanes", "glyph", "misc", "quests", "resources", "sigils"],
+  "icons":[
+    {
+      "type": "DT_ELECTRICITY",
+      "icon": "⚡"
+    },
+    {
+      "type": "DT_PUNCTURE",
+      "icon": "🗡"
+    },
+    {
+      "type": "DT_FIRE",
+      "icon": "🔥"
+    },
+    {
+      "type": "DT_FREEZE",
+      "icon": "❄"
+    },
+    {
+      "type": "DT_IMPACT",
+      "icon": "🔨"
+    },
+    {
+      "type": "DT_SLASH",
+      "icon": "⚔"
+    },
+    {
+      "type": "DT_POISON",
+      "icon": "💀"
+    },
+    {
+      "type": "DT_MAGNETIC",
+      "icon": "Ⓜ"
+    },
+    {
+      "type": "DT_RADIATION",
+      "icon": "☢"
+    },
+    {
+      "type": "DT_CORROSIVE",
+      "icon": "🌡"
+    },
+    {
+      "type": "DT_EXPLOSION",
+      "icon": "💥"
+    },
+    {
+      "type": "DT_VIRAL",
+      "icon": "⚕"
+    },
+    {
+      "type": "DT_GAS",
+      "icon": "☣"
+    }
+  ]
+}
