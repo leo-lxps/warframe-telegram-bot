@@ -1,3 +1,213 @@
 {
-  "sessinos": []
+  "sessinos": [],
+  "sessions": [
+    {
+      "id": "124968408:124968408",
+      "data": {
+        "user": {
+          "username": "erobb221",
+          "id": 124968408,
+          "optIn": true
+        },
+        "alertItems": [],
+        "sortie": {
+          "id": "5b8eac0121793a5f6d8d54b1",
+          "activation": "2018-09-04T16:00:01.159Z",
+          "expiry": "2018-09-05T15:59:00.000Z",
+          "rewardPool": "Sortie Rewards",
+          "variants": [
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Interception",
+              "modifier": "Energy Reduction",
+              "modifierDescription": "Maximum Warframe Energy capacity is quartered. Energy Siphon is less effective.",
+              "node": "Xini (Eris)"
+            },
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Spy",
+              "modifier": "Augmented Enemy Armor",
+              "modifierDescription": "Enemies have Improved/Added armor. Corrosive Projection effects are halved.",
+              "node": "Helene (Saturn)"
+            },
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Rescue",
+              "modifier": "Enemy Physical Enhancement: Slash",
+              "modifierDescription": "Enemies can deal enhanced slash damage. Finishing damage is not resisted.",
+              "node": "Alator (Mars)"
+            }
+          ],
+          "boss": "Lephantis",
+          "faction": "Infestation",
+          "expired": false,
+          "eta": "23h 9m 14s"
+        }
+      }
+    },
+    {
+      "id": "200156588:200156588",
+      "data": {
+        "user": {
+          "username": "keksmonster",
+          "id": 200156588,
+          "optIn": false
+        },
+        "alertItems": [
+          "Locust",
+          "mordred",
+          "Virago",
+          "canopic",
+          "prion",
+          "quantum",
+          "vespa",
+          "catalyst",
+          "reactor",
+          "nitain",
+          "barrel",
+          "receiver",
+          "stock",
+          "riven",
+          "chorus",
+          "shikoro",
+          "clisthert",
+          "sheev",
+          "strun"
+        ],
+        "sortie": {
+          "id": "5b8eac0121793a5f6d8d54b1",
+          "activation": "2018-09-04T16:00:01.159Z",
+          "expiry": "2018-09-05T15:59:00.000Z",
+          "rewardPool": "Sortie Rewards",
+          "variants": [
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Interception",
+              "modifier": "Energy Reduction",
+              "modifierDescription": "Maximum Warframe Energy capacity is quartered. Energy Siphon is less effective.",
+              "node": "Xini (Eris)"
+            },
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Spy",
+              "modifier": "Augmented Enemy Armor",
+              "modifierDescription": "Enemies have Improved/Added armor. Corrosive Projection effects are halved.",
+              "node": "Helene (Saturn)"
+            },
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Rescue",
+              "modifier": "Enemy Physical Enhancement: Slash",
+              "modifierDescription": "Enemies can deal enhanced slash damage. Finishing damage is not resisted.",
+              "node": "Alator (Mars)"
+            }
+          ],
+          "boss": "Lephantis",
+          "faction": "Infestation",
+          "expired": false,
+          "eta": "23h 18m 14s"
+        }
+      }
+    },
+    {
+      "id": "-3720190679744504026:200156588",
+      "data": {
+        "user": {
+          "username": "keksmonster",
+          "id": 200156588,
+          "optIn": false
+        },
+        "alertItems": [],
+        "sortie": {
+          "id": "5b8eac0121793a5f6d8d54b1",
+          "activation": "2018-09-04T16:00:01.159Z",
+          "expiry": "2018-09-05T15:59:00.000Z",
+          "rewardPool": "Sortie Rewards",
+          "variants": [
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Interception",
+              "modifier": "Energy Reduction",
+              "modifierDescription": "Maximum Warframe Energy capacity is quartered. Energy Siphon is less effective.",
+              "node": "Xini (Eris)"
+            },
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Spy",
+              "modifier": "Augmented Enemy Armor",
+              "modifierDescription": "Enemies have Improved/Added armor. Corrosive Projection effects are halved.",
+              "node": "Helene (Saturn)"
+            },
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Rescue",
+              "modifier": "Enemy Physical Enhancement: Slash",
+              "modifierDescription": "Enemies can deal enhanced slash damage. Finishing damage is not resisted.",
+              "node": "Alator (Mars)"
+            }
+          ],
+          "boss": "Lephantis",
+          "faction": "Infestation",
+          "expired": false,
+          "eta": "23h 30m 14s"
+        }
+      }
+    },
+    {
+      "id": "-3720190679744504026:124968408",
+      "data": {
+        "user": {
+          "username": "erobb221",
+          "id": 124968408,
+          "optIn": false
+        },
+        "alertItems": [],
+        "sortie": {
+          "id": "5b8eac0121793a5f6d8d54b1",
+          "activation": "2018-09-04T16:00:01.159Z",
+          "expiry": "2018-09-05T15:59:00.000Z",
+          "rewardPool": "Sortie Rewards",
+          "variants": [
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Interception",
+              "modifier": "Energy Reduction",
+              "modifierDescription": "Maximum Warframe Energy capacity is quartered. Energy Siphon is less effective.",
+              "node": "Xini (Eris)"
+            },
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Spy",
+              "modifier": "Augmented Enemy Armor",
+              "modifierDescription": "Enemies have Improved/Added armor. Corrosive Projection effects are halved.",
+              "node": "Helene (Saturn)"
+            },
+            {
+              "boss": "Deprecated",
+              "planet": "Deprecated",
+              "missionType": "Rescue",
+              "modifier": "Enemy Physical Enhancement: Slash",
+              "modifierDescription": "Enemies can deal enhanced slash damage. Finishing damage is not resisted.",
+              "node": "Alator (Mars)"
+            }
+          ],
+          "boss": "Lephantis",
+          "faction": "Infestation",
+          "expired": false,
+          "eta": "23h 30m 14s"
+        }
+      }
+    }
+  ]
 }
