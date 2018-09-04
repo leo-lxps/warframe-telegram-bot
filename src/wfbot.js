@@ -1,8 +1,7 @@
 "use strict";
 
 const Telegraf = require("telegraf"),
-  data = require("./db/data.json"),
-  token = require("..token.json"),
+  token = require("../token.json"),
   cron = require("node-cron"),
   os = require("os"),
   commandParts = require("telegraf-command-parts"),
@@ -11,7 +10,7 @@ const Telegraf = require("telegraf"),
   Util = require("./utils/Util");
 
 const bot = new Telegraf(
-  os.platform() == "win32" ? token.one : token.two
+  os.platform() == "win32" ? token.test : token.main
 );
 
 var sortieSend = false;

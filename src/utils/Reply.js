@@ -151,16 +151,7 @@ const Reply = {
       return;
     }
     const bot = shortApi.telegram;
-    const less = Telegraf.Extra.markdown().markup(m =>
-      m.inlineKeyboard([
-        [
-          m.callbackButton("LESS", "showFilterCallback"),
-          m.callbackButton("FILTER", "filterCallback"),
-          m.callbackButton("REFRESH", "refreshAllAlertsCallback")
-        ],
-        [m.callbackButton("DASHBOARD", "dashCallback")]
-      ])
-    );
+
     const more = Telegraf.Extra.markdown().markup(m =>
       m.inlineKeyboard([
         [
@@ -188,7 +179,11 @@ const Reply = {
 
       const search = alerts =>
         alerts
-          .reduce((str, al) => (str += al.item ? al.item + ", " : ""), "")
+          .reduce(
+            (str, al) =>
+              (str += al.item ? al.item.replace("Blueprint", "") + ", " : ""),
+            ""
+          )
           .slice(0, -2);
 
       Util.getAlerts(alerts => {
@@ -771,8 +766,8 @@ const Reply = {
             inline_keyboard: [
               [
                 {
-                  text: "DASHBOARD",
-                  callback_data: "dashCallback"
+                  text: "SEARCH NEW",
+                  switch_inline_query_current_chat: ""
                 }
               ]
             ]
@@ -826,8 +821,8 @@ const Reply = {
             inline_keyboard: [
               [
                 {
-                  text: "DASHBOARD",
-                  callback_data: "dashCallback"
+                  text: "SEARCH NEW",
+                  switch_inline_query_current_chat: ""
                 }
               ]
             ]
@@ -835,96 +830,6 @@ const Reply = {
         });
       }
     });
-
-    // var items = [];
-    // Util.getDrops(ctx.inlineQuery.query, drops => {
-    //   drops.forEach(drop => {
-    //     var found = items.find(e => drop.item == e.item);
-    //     var extraItem = extra.filter(ex => ex.name == drop.item)[0];
-    //     var messageText =
-    //       "\n\t Location: `" +
-    //       drop.place +
-    //       "`\n\t Chance: `" +
-    //       drop.rarity +
-    //       "` (_" +
-    //       drop.chance +
-    //       "%_)\n";
-
-    //     if (!found) {
-    //       items.push({
-    //         type: "drop",
-    //         item: drop.item,
-    //         extra: extraItem
-    //           ? (extraItem.description
-    //               ? "\n_" +
-    //                 extraItem.description.replace(/\<([^>]+)\>/g, "") +
-    //                 "_"
-    //               : "") +
-    //             (extraItem.polarity
-    //               ? "\n\tPolarity: `" +
-    //                 extraItem.polarity.replace("_", " ") +
-    //                 "`"
-    //               : "") +
-    //             (extraItem.polarity
-    //               ? "\n\tDrain: `" +
-    //                 extraItem.baseDrain +
-    //                 "-" +
-    //                 (parseInt(extraItem.baseDrain) +
-    //                   parseInt(extraItem.fusionLimit)) +
-    //                 "`\n"
-    //               : "")
-    //           : "",
-    //         locations: [
-    //           {
-    //             chance: drop.chance,
-    //             place: drop.place,
-    //             rarity: drop.rarity,
-    //             message: messageText
-    //           }
-    //         ]
-    //       });
-    //     } else {
-    //       if (!found.locations.find(l => l.place == drop.place)) {
-    //         found.locations.push({
-    //           chance: drop.chance,
-    //           place: drop.place,
-    //           rarity: drop.rarity,
-    //           message: messageText
-    //         });
-    //       }
-    //     }
-    //   });
-
-    // items.forEach((item, i) => {
-    //   var locations = item.locations;
-    //   locations.sort((a, b) => {
-    //     return a.chance > b.chance ? -1 : 1;
-    //   });
-    //   locations = locations.slice(0, 10);
-    //   inlineObjects.push({
-    //     type: "article",
-    //     id: "b" + i,
-    //     title: item.item,
-    //     description: locations[0].place + " - " + locations[0].rarity,
-    //     input_message_content: {
-    //       message_text:
-    //         item.item +
-    //         item.extra +
-    //         locations.reduce((str, loc) => (str += loc.message), ""),
-    //       parse_mode: "Markdown"
-    //     },
-    //     reply_markup: {
-    //       inline_keyboard: [
-    //         [
-    //           {
-    //             text: "DASHBOARD",
-    //             callback_data: "dashCallback"
-    //           }
-    //         ]
-    //       ]
-    //     }
-    //   });
-    // });
 
     if (inlineObjects.length < 1) {
       inlineObjects.push({

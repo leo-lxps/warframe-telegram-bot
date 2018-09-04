@@ -1,5 +1,4 @@
-const data = require("../db/data.json"),
-  admins = require("../../admins.json") || [],
+const admins = require("../../admins.json") || [],
   request = require("request"),
   fs = require("fs"),
   Items = require("warframe-items"),
@@ -395,15 +394,6 @@ const Util = {
   },
   getItems: query => {
     const items = new Items();
-    // [
-    // "Warframes",
-    // "Secondary",
-    // "Melee",
-    // "Primary",
-    // "Pets",
-    // "Sentinels",
-    // "Mods"
-    // ]
     var queries = query
       .split(",")
       .filter(q => q != "")
@@ -424,8 +414,6 @@ const Util = {
   translateItem: item => {
     switch (item.category) {
       case "Archwing":
-      // part weap part warframe
-      //type: Archwing is warframe
       case "Secondary":
       case "Melee":
       case "Primary":

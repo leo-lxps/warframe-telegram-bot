@@ -6,8 +6,8 @@ Place your Telegram token in a file called `token.json`  in your root directory
 
 ````json
 {
-  "one": "test-bot-telegram-token",
-  "two": "main-bot-telegram-token"
+  "test": "test-bot-telegram-token",
+  "main": "main-bot-telegram-token"
 }
 ```` 
 
