@@ -405,7 +405,11 @@ const Util = {
       }
       var b = false;
       queries.forEach(query => {
-        if (i.name.toUpperCase().includes(query.toUpperCase())) b = true;
+        if (i.name.toUpperCase().includes(query.toUpperCase())) {
+          if (i.name.charAt(0) != "/" && i.name != "[Ph]") {
+            b = true;
+          }
+        }
       });
       return b;
     });
