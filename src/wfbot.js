@@ -47,7 +47,7 @@ bot.help(ctx => {
   /cleardb - !! Clears your database entry, use with care !!
 
   /time^^ - Save mission time to \`times.json\`
-            \`/time <mission> <mm:ss> [boss]\`
+            \`/time <mission>, <mm:ss> [, boss]\`
 
 *INLINE*
   Get mission drops with: \`@BerndDasBot <Search>\`

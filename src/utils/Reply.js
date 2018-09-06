@@ -68,10 +68,11 @@ const Reply = {
   },
   alert: (ctx, bot) => {
     ctx.session.alertItems = ctx.session.alertItems || [];
-    const args = ctx.state.command.splitArgs;
+    const argsStr = ctx.state.command.splitArgs.join(" ");
+    const args = argsStr.split(",");
     args.forEach(arg => {
-      const match = arg.match(/(\w+)/g) || [""];
-      const item = match[0];
+      const match = arg.match(/([\w ]+)/g) || [""];
+      const item = match[0].trim();
       if (item != "") {
         if (item.toUpperCase() == "ALL") {
           var exists = false;
@@ -107,19 +108,29 @@ const Reply = {
       return self.indexOf(item) == pos;
     });
     if (ctx.session.alertItems.length > 0) {
-      ctx.replyWithMarkdown(
-        "Updated list:\n" +
-          ctx.session.alertItems.reduce(
-            (str, i) => (str += "`" + i + "`\n"),
-            ""
-          ),
-        Telegraf.Extra.markdown().markup(m =>
-          m.inlineKeyboard([
-            [m.callbackButton("REMOVE", "removeItemCallback")],
-            [m.callbackButton("DASHBOARD", "dashCallback")]
-          ])
-        )
+      const remApp = Telegraf.Extra.markdown().markup(m =>
+        m.inlineKeyboard([
+          [
+            m.callbackButton("BACK", "showFilterCallback"),
+            m.callbackButton("REMOVE", "removeItemCallback")
+          ],
+          [
+            m.callbackButton("DASHBOARD", "dashCallback"),
+            m.switchToCurrentChatButton(
+              "SEARCH",
+              ctx.session.alertItems.join(", ")
+            )
+          ]
+        ])
       );
+      const msg =
+        "Updated list:\n" +
+        ctx.session.alertItems.reduce(
+          (str, i) => (str += "`" + i + "`\n"),
+          ""
+        ) +
+        "\n_Add items with /alert <item>_";
+      ctx.replyWithMarkdown(msg, remApp);
       Reply.checkAlert(ctx.session.alertItems, ctx.from.id, bot);
     } else {
       ctx.replyWithMarkdown(noItemsMsg);
@@ -273,17 +284,6 @@ const Reply = {
                     bot.sendMessage(userId, msg(alerts), more);
                   }
                   sendAll = true;
-                } else {
-                  if (editMessage) {
-                    shortApi.editMessageText(noAlerts, more).catch(err => {
-                      if (err.code != 400) console.warn(err);
-                    });
-                  } else if (returnString) {
-                    Callback(noAlerts);
-                  } else {
-                    bot.sendMessage(userId, noAlerts, more);
-                  }
-                  sendAll = true;
                 }
               } else {
                 alerts.forEach(al => {
@@ -296,28 +296,25 @@ const Reply = {
                 });
               }
             });
+            const moreUser = Telegraf.Extra.markdown().markup(m =>
+              m.inlineKeyboard([
+                [
+                  m.callbackButton("MORE", allBtn),
+                  m.callbackButton("FILTER", "filterCallback"),
+                  m.callbackButton("REFRESH", refreshBtn)
+                ],
+                [
+                  m.callbackButton("ALERTS", "Alert.showFilterCallback"),
+                  m.callbackButton("INVASIONS", "Invasion.showFilterCallback"),
+                  m.callbackButton("BOUNTIES", "Bounty.showFilterCallback")
+                ],
+                [
+                  m.callbackButton("DASHBOARD", "dashCallback"),
+                  m.switchToCurrentChatButton("SEARCH", search(userAlerts))
+                ]
+              ])
+            );
             if (!sendAll && userAlerts.length > 0) {
-              const moreUser = Telegraf.Extra.markdown().markup(m =>
-                m.inlineKeyboard([
-                  [
-                    m.callbackButton("MORE", allBtn),
-                    m.callbackButton("FILTER", "filterCallback"),
-                    m.callbackButton("REFRESH", refreshBtn)
-                  ],
-                  [
-                    m.callbackButton("ALERTS", "Alert.showFilterCallback"),
-                    m.callbackButton(
-                      "INVASIONS",
-                      "Invasion.showFilterCallback"
-                    ),
-                    m.callbackButton("BOUNTIES", "Bounty.showFilterCallback")
-                  ],
-                  [
-                    m.callbackButton("DASHBOARD", "dashCallback"),
-                    m.switchToCurrentChatButton("SEARCH", search(userAlerts))
-                  ]
-                ])
-              );
               if (editMessage) {
                 shortApi
                   .editMessageText(msg(userAlerts), moreUser)
@@ -353,10 +350,16 @@ const Reply = {
     const remApp = Telegraf.Extra.markdown().markup(m =>
       m.inlineKeyboard([
         [
-          m.callbackButton("REMOVE", "removeItemCallback"),
-          m.callbackButton("APPLY", "applyCallback")
+          m.callbackButton("BACK", "showFilterCallback"),
+          m.callbackButton("REMOVE", "removeItemCallback")
         ],
-        [m.callbackButton("DASHBOARD", "dashCallback")]
+        [
+          m.callbackButton("DASHBOARD", "dashCallback"),
+          m.switchToCurrentChatButton(
+            "SEARCH",
+            ctx.session.alertItems.join(", ")
+          )
+        ]
       ])
     );
     const ok = Telegraf.Extra.markdown().markup(m =>
@@ -366,31 +369,22 @@ const Reply = {
       ])
     );
     if (ctx.session.alertItems.length > 0) {
+      var msg =
+        ctx.session.alertItems.reduce(
+          (str, a) => (str += "`" + a + "`\n"),
+          "Items in filter:\n"
+        ) + "\n_Add items with /alert <item>_";
       if (editMessage) {
-        ctx
-          .editMessageText(
-            ctx.session.alertItems.reduce(
-              (str, a) => (str += "`" + a + "`\n"),
-              "Items in filter:\n"
-            ),
-            remApp
-          )
-          .catch(err => {
-            if (err.code != 400) console.warn(err);
-          });
+        ctx.editMessageText(msg, remApp).catch(err => {
+          console.warn(err);
+        });
       } else {
-        ctx.replyWithMarkdown(
-          ctx.session.alertItems.reduce(
-            (str, a) => (str += "`" + a + "`\n"),
-            "Items in filter:\n"
-          ),
-          remApp
-        );
+        ctx.replyWithMarkdown(msg, remApp);
       }
     } else {
       if (editMessage) {
         ctx.editMessageText(noItemsMsg, ok).catch(err => {
-          if (err.code != 400) console.warn(err);
+          console.warn(err);
         });
       } else {
         ctx.replyWithMarkdown(noItemsMsg, ok);
@@ -728,17 +722,20 @@ const Reply = {
         } else console.warn(err);
       }
       let prevTimes = timesRaw ? JSON.parse(timesRaw) : [];
-      const args = ctx.state.command.splitArgs;
-      if (args.length > 1) {
+
+      const argStr = ctx.state.command.args;
+      const args = argStr.split(",").map(a => a.trim());
+
+      if (args.length > 1 && args.length < 4) {
         const mission = args[0];
         const time = args[1];
         const boss = args[2];
 
         if (Util.isAssAss(mission) && args.length == 2) {
           ctx.replyWithMarkdown(
-            "please add a boss name, use this format: \n" +
-              "`/time <missionType> <mm:ss> [boss name]`\n" +
-              "*<>: required*, []: optional"
+            "Please add a boss name, use this format: \n" +
+              "`/time <missionType>, <mm:ss> [, boss name]`\n" +
+              "*<>: required*, []: optional\n_Don't forget the commas!_"
           );
           return;
         } else {
@@ -783,9 +780,7 @@ const Reply = {
                   "not a valid Time: " + time + ", use format mm:ss "
                 );
                 return;
-              } else if (args.length >= 3) {
-                var boss = args.splice(2).join(" ");
-
+              } else if (args.length == 3) {
                 if (!possibleBosses.includes(boss.toUpperCase())) {
                   ctx.replyWithMarkdown("not a valid Boss: " + boss);
                   return;
@@ -800,9 +795,9 @@ const Reply = {
         }
       } else {
         ctx.replyWithMarkdown(
-          "not a valid time, use this format:\n" +
-            "`/time <missionType> <mm:ss> [boss name]`\n" +
-            "*<>: required*, []: optional"
+          "*Not* a valid format, use this format:\n" +
+            "`/time <missionType>, <mm:ss> [, boss name]`\n" +
+            "*<>: required*, []: optional\n_Don't forget the commas!_"
         );
       }
     });
@@ -834,7 +829,7 @@ const Reply = {
           min +
           "m* and *" +
           sec +
-          "s*"
+          "s* to databse."
       );
     });
   },
