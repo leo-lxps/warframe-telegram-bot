@@ -9,12 +9,10 @@ const Telegraf = require("telegraf"),
   Reply = require("./utils/Reply"),
   Util = require("./utils/Util");
 
-const bot = new Telegraf(
-  os.platform() == "win32" ? token.test : token.main
-);
+const bot = new Telegraf(os.platform() == "win32" ? token.test : token.main);
 
 var sortieSend = false;
-const localSession = new LocalSession({ database: "./db/db.json" })
+const localSession = new LocalSession({ database: "./db/db.json" });
 bot.use(localSession.middleware());
 bot.use(commandParts());
 
@@ -48,7 +46,7 @@ bot.help(ctx => {
   /optout - Shortcut for unsubscribing to sortie notification
   /cleardb - !! Clears your database entry, use with care !!
 
-  /time^^ - Save mission time to _times.json_
+  /time^^ - Save mission time to \`times.json\`
             \`/time <mission> <mm:ss> [boss]\`
 
 *INLINE*
@@ -126,6 +124,10 @@ bot.command("events", ctx => {
   Util.addUser(ctx);
   Reply.events(ctx);
 });
+bot.command("bounties", ctx => {
+  Util.addUser(ctx);
+  Reply.bounties(ctx);
+});
 
 // drops
 bot.on("inline_query", ctx => {
@@ -180,21 +182,29 @@ cron.schedule(
 
 cron.schedule(
   "*/2 * * * *",
-  function () {
-    Util.getSessions(sessions => {
-      if (sessions.length < 1) return;
-      sessions.forEach(session => {
-        if (session.data.alertItems && session.data.user) {
-          console.log(
-            Util.getNow(),
-            "Checking alerts for: ",
-            session.data.user.username
-          );
-          Reply.checkAlert(session.data.alertItems, session.data.user.id, bot);
-        }
+  function() {
+    try {
+      Util.getSessions(sessions => {
+        if (sessions.length < 1) return;
+        sessions.forEach(session => {
+          if (session.data.alertItems && session.data.user) {
+            console.log(
+              Util.getNow(),
+              "Checking alerts for: ",
+              session.data.user.username
+            );
+            Reply.checkAlert(
+              session.data.alertItems,
+              session.data.user.id,
+              bot
+            );
+          }
+        });
+        Util.getInfo(alerts => alerts.forEach(al => Util.addNotified(al.id)));
       });
-      Util.getAlerts(alerts => alerts.forEach(al => Util.addNotified(al.id)));
-    });
+    } catch (err) {
+      console.warn(Util.getNow(), err);
+    }
   },
   true
 );

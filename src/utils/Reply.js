@@ -128,9 +128,6 @@ const Reply = {
   ignored: ctx => {
     ctx.replyWithMarkdown("Ignored Alerts:\n" + Util.getNotified().join("\n"));
   },
-  dash: ctx => {
-    ctx.replyWithMarkdown("this will be your dash");
-  },
   checkAlert: (
     alertItems,
     userId,
@@ -139,7 +136,8 @@ const Reply = {
     printAll,
     editMessage,
     returnString,
-    Callback
+    Callback,
+    types
   ) => {
     if (!alertItems || !userId || !shortApi) {
       console.log(
@@ -152,12 +150,21 @@ const Reply = {
     }
     const bot = shortApi.telegram;
 
+    const allBtn = types ? types[0] + ".showAllCallback" : "showAllCallback";
+    const filterBtn = types
+      ? types[0] + ".showFilterCallback"
+      : "showFilterCallback";
+    const refreshBtn = types
+      ? types[0] + ".refreshAlertsCallback"
+      : "refreshAlertsCallback";
+    const noAlerts =
+      "No " + (types ? types.join("/") : "Alerts/Invasions/Bounties");
     const more = Telegraf.Extra.markdown().markup(m =>
       m.inlineKeyboard([
         [
-          m.callbackButton("ALL", "showAllCallback"),
+          m.callbackButton("MORE", allBtn),
           m.callbackButton("FILTER", "filterCallback"),
-          m.callbackButton("REFRESH", "refreshAlertsCallback")
+          m.callbackButton("REFRESH", refreshBtn)
         ],
         [m.callbackButton("DASHBOARD", "dashCallback")]
       ])
@@ -165,13 +172,13 @@ const Reply = {
     if (alertItems.length < 1 && !printAll) {
       if (!ignoreNotified && !editMessage && !returnString) return;
       if (editMessage) {
-        shortApi.editMessageText("No alerts", more).catch(err => {
+        shortApi.editMessageText(noAlerts, more).catch(err => {
           if (err.code != 400) console.warn(err);
         });
       } else if (returnString) {
-        Callback("No alerts");
+        Callback(noAlerts);
       } else {
-        bot.sendMessage(userId, "No alerts", more);
+        bot.sendMessage(userId, noAlerts, more);
       }
     } else {
       const msg = alerts =>
@@ -186,96 +193,159 @@ const Reply = {
           )
           .slice(0, -2);
 
-      Util.getAlerts(alerts => {
-        const less = Telegraf.Extra.markdown().markup(m =>
-          m.inlineKeyboard([
-            [
-              m.callbackButton("LESS", "showFilterCallback"),
-              m.callbackButton("FILTER", "filterCallback"),
-              m.callbackButton("REFRESH", "refreshAllAlertsCallback")
-            ],
-            [
-              m.callbackButton("DASHBOARD", "dashCallback"),
-              m.switchToCurrentChatButton("SEARCH", search(alerts))
-            ]
-          ])
-        );
-        const more = Telegraf.Extra.markdown().markup(m =>
-          m.inlineKeyboard([
-            [
-              m.callbackButton("ALL", "showAllCallback"),
-              m.callbackButton("FILTER", "filterCallback"),
-              m.callbackButton("REFRESH", "refreshAlertsCallback")
-            ],
-            [
-              m.callbackButton("DASHBOARD", "dashCallback"),
-              m.switchToCurrentChatButton("SEARCH", search(alerts))
-            ]
-          ])
-        );
+      /** GET ALERTS */
+      Util.getInfo(
+        alerts => {
+          const less = Telegraf.Extra.markdown().markup(m =>
+            m.inlineKeyboard([
+              [
+                m.callbackButton("LESS", filterBtn),
+                m.callbackButton("FILTER", "filterCallback"),
+                m.callbackButton("REFRESH", "refreshAllAlertsCallback")
+              ],
+              [
+                m.callbackButton("ALERTS", "Alert.showAllCallback"),
+                m.callbackButton("INVASIONS", "Invasion.showAllCallback"),
+                m.callbackButton("BOUNTIES", "Bounty.showAllCallback")
+              ],
+              [
+                m.callbackButton("DASHBOARD", "dashCallback"),
+                m.switchToCurrentChatButton("SEARCH", search(alerts))
+              ]
+            ])
+          );
+          const more = Telegraf.Extra.markdown().markup(m =>
+            m.inlineKeyboard([
+              [
+                m.callbackButton("MORE", allBtn),
+                m.callbackButton("FILTER", "filterCallback"),
+                m.callbackButton("REFRESH", refreshBtn)
+              ],
+              [
+                m.callbackButton("ALERTS", "Alert.showFilterCallback"),
+                m.callbackButton("INVASIONS", "Invasion.showFilterCallback"),
+                m.callbackButton("BOUNTIES", "Bounty.showFilterCallback")
+              ],
+              [
+                m.callbackButton("DASHBOARD", "dashCallback"),
+                m.switchToCurrentChatButton("SEARCH", search(alerts))
+              ]
+            ])
+          );
 
-        if (printAll) {
-          if (editMessage) {
-            shortApi.editMessageText(msg(alerts), less).catch(err => {
-              if (err.code != 400) console.warn(err);
-            });
-          } else if (returnString) {
-            Callback(msg(alerts));
+          if (printAll) {
+            if (alerts.length > 0) {
+              if (editMessage) {
+                shortApi.editMessageText(msg(alerts), less).catch(err => {
+                  if (err.code != 400) console.warn(err);
+                });
+              } else if (returnString) {
+                Callback(msg(alerts));
+              } else {
+                bot.sendMessage(userId, msg(alerts), less);
+              }
+              sendAll = true;
+            } else {
+              if (editMessage) {
+                shortApi.editMessageText(noAlerts, less).catch(err => {
+                  if (err.code != 400) console.warn(err);
+                });
+              } else if (returnString) {
+                Callback(noAlerts);
+              } else {
+                bot.sendMessage(userId, noAlerts, less);
+              }
+              sendAll = true;
+            }
           } else {
-            bot.sendMessage(userId, msg(alerts), less);
-          }
-        } else {
-          var userAlerts = [];
-          var sendAll = false;
-          alertItems.forEach(a => {
-            if (a.toUpperCase() == "ALL") {
-              if (alerts.length > 0) {
-                if (editMessage) {
-                  shortApi.editMessageText(msg(alerts), more).catch(err => {
+            var userAlerts = [];
+            var sendAll = false;
+            alertItems.forEach(a => {
+              if (a.toUpperCase() == "ALL") {
+                if (alerts.length > 0) {
+                  if (editMessage) {
+                    shortApi.editMessageText(msg(alerts), more).catch(err => {
+                      if (err.code != 400) console.warn(err);
+                    });
+                  } else if (returnString) {
+                    Callback(msg(alerts));
+                  } else {
+                    bot.sendMessage(userId, msg(alerts), more);
+                  }
+                  sendAll = true;
+                } else {
+                  if (editMessage) {
+                    shortApi.editMessageText(noAlerts, more).catch(err => {
+                      if (err.code != 400) console.warn(err);
+                    });
+                  } else if (returnString) {
+                    Callback(noAlerts);
+                  } else {
+                    bot.sendMessage(userId, noAlerts, more);
+                  }
+                  sendAll = true;
+                }
+              } else {
+                alerts.forEach(al => {
+                  if (
+                    al.message.toUpperCase().includes(a.toUpperCase()) &&
+                    !userAlerts.includes(al)
+                  ) {
+                    userAlerts.push(al);
+                  }
+                });
+              }
+            });
+            if (!sendAll && userAlerts.length > 0) {
+              const moreUser = Telegraf.Extra.markdown().markup(m =>
+                m.inlineKeyboard([
+                  [
+                    m.callbackButton("MORE", allBtn),
+                    m.callbackButton("FILTER", "filterCallback"),
+                    m.callbackButton("REFRESH", refreshBtn)
+                  ],
+                  [
+                    m.callbackButton("ALERTS", "Alert.showFilterCallback"),
+                    m.callbackButton(
+                      "INVASIONS",
+                      "Invasion.showFilterCallback"
+                    ),
+                    m.callbackButton("BOUNTIES", "Bounty.showFilterCallback")
+                  ],
+                  [
+                    m.callbackButton("DASHBOARD", "dashCallback"),
+                    m.switchToCurrentChatButton("SEARCH", search(userAlerts))
+                  ]
+                ])
+              );
+              if (editMessage) {
+                shortApi
+                  .editMessageText(msg(userAlerts), moreUser)
+                  .catch(err => {
                     if (err.code != 400) console.warn(err);
                   });
-                } else if (returnString) {
-                  Callback(msg(alerts));
-                } else {
-                  bot.sendMessage(userId, msg(alerts), more);
-                }
-                sendAll = true;
+              } else if (returnString) {
+                Callback(msg(userAlerts));
+              } else {
+                bot.sendMessage(userId, msg(userAlerts), moreUser);
               }
-            } else {
-              alerts.forEach(al => {
-                if (
-                  al.message.toUpperCase().includes(a.toUpperCase()) &&
-                  !userAlerts.includes(al)
-                ) {
-                  userAlerts.push(al);
-                }
-              });
-            }
-          });
-          if (!sendAll && userAlerts.length > 0) {
-            if (editMessage) {
-              shortApi.editMessageText(msg(userAlerts), more).catch(err => {
-                if (err.code != 400) console.warn(err);
-              });
-            } else if (returnString) {
-              Callback(msg(userAlerts));
-            } else {
-              bot.sendMessage(userId, msg(userAlerts), more);
-            }
-          } else if (!sendAll && ignoreNotified) {
-            //no alert found with filter
-            if (editMessage) {
-              shortApi.editMessageText("No alerts", more).catch(err => {
-                if (err.code != 400) console.warn(err);
-              });
-            } else if (returnString) {
-              Callback("");
-            } else {
-              bot.sendMessage(userId, "No alerts", more);
+            } else if (!sendAll && ignoreNotified) {
+              //no alert found with filter
+              if (editMessage) {
+                shortApi.editMessageText(noAlerts, moreUser).catch(err => {
+                  if (err.code != 400) console.warn(err);
+                });
+              } else if (returnString) {
+                Callback("");
+              } else {
+                bot.sendMessage(userId, noAlerts, moreUser);
+              }
             }
           }
-        }
-      }, ignoreNotified);
+        },
+        ignoreNotified,
+        types
+      );
     }
   },
   listAlert: (ctx, editMessage) => {
@@ -400,9 +470,7 @@ const Reply = {
       Reply.options(ctx);
     } else if (btn == "backCallback") {
       ctx.answerCbQuery("Loading Sortie!");
-      Util.getSortie(sortie => {
-        Reply.sortie(ctx, sortie, 1);
-      });
+      Reply.dash(ctx, true);
     } else if (btn == "optinCallback") {
       ctx.answerCbQuery("Subscribed!");
       Reply.optIn(ctx);
@@ -421,20 +489,53 @@ const Reply = {
     } else if (btn == "applyCallback") {
       ctx.answerCbQuery("Applied!");
       Reply.listAlert(ctx, true);
-    } else if (btn == "showAllCallback") {
+    } else if (btn.includes("showAllCallback")) {
+      let type = btn.includes(".") ? [btn.split(".")[0]] : ["Alert"];
       ctx.answerCbQuery("Loading all alerts!");
-      Reply.checkAlert(ctx.session.alertItems, userId, ctx, true, true, true);
-    } else if (btn == "showFilterCallback") {
+      Reply.checkAlert(
+        ctx.session.alertItems,
+        userId,
+        ctx,
+        true,
+        true,
+        true,
+        false,
+        false,
+        type
+      );
+    } else if (btn.includes("showFilterCallback")) {
+      let type = btn.includes(".") ? [btn.split(".")[0]] : ["Alert"];
       ctx.answerCbQuery("Loading custom alerts!");
-      Reply.checkAlert(ctx.session.alertItems, userId, ctx, true, false, true);
+      Reply.checkAlert(
+        ctx.session.alertItems,
+        userId,
+        ctx,
+        true,
+        false,
+        true,
+        false,
+        false,
+        type
+      );
     } else if (btn.includes("bossCallback")) {
-      ctx.answerCbQuery("Your actions have consequences!", true);
+      ctx.answerCbQuery("Your actions have consequences...", true);
     } else if (btn.includes("refreshAllAlertsCallback")) {
       ctx.answerCbQuery("Refreshing...");
       Reply.checkAlert(ctx.session.alertItems, userId, ctx, true, true, true);
     } else if (btn.includes("refreshAlertsCallback")) {
+      let type = btn.includes(".") ? [btn.split(".")[0]] : ["Alert"];
       ctx.answerCbQuery("Refreshing your alerts...");
-      Reply.checkAlert(ctx.session.alertItems, userId, ctx, true, false, true);
+      Reply.checkAlert(
+        ctx.session.alertItems,
+        userId,
+        ctx,
+        true,
+        false,
+        true,
+        false,
+        false,
+        type
+      );
     } else if (btn == "filterCallback") {
       ctx.answerCbQuery("Loading filter!");
       Reply.listAlert(ctx, true);
@@ -449,23 +550,26 @@ const Reply = {
       Reply.listAlert(ctx, true);
     } else if (btn == "slapCallback") {
       ctx.answerCbQuery("Slap me harder daddy!");
-      Util.slap();
-      ctx.telegram.editMessageReplyMarkup(
-        undefined,
-        undefined,
-        ctx.callbackQuery.inline_message_id,
-        {
-          inline_keyboard: [
-            [
-              {
-                text: "SLAP | " + Util.slapped,
-                callback_data: "slapCallback"
-              }
-            ]
-          ]
-        }
-      );
+      Reply.slap(ctx);
     }
+  },
+  slap: ctx => {
+    Util.slap();
+    ctx.telegram.editMessageReplyMarkup(
+      undefined,
+      undefined,
+      ctx.callbackQuery.inline_message_id,
+      {
+        inline_keyboard: [
+          [
+            {
+              text: "SLAP | " + Util.slapped,
+              callback_data: "slapCallback"
+            }
+          ]
+        ]
+      }
+    );
   },
   clear: ctx => (ctx.session = null),
   optOut: ctx => {
@@ -519,7 +623,6 @@ const Reply = {
     const menu = Telegraf.Extra.markdown().markup(m =>
       m.inlineKeyboard([
         [
-          m.callbackButton("OPTIONS", "optionsCallback"),
           m.callbackButton("INFO", "infoCallback"),
           m.callbackButton(sortie.faction, "factionCallback"),
           m.callbackButton(timeMSG, "timeCallback")
@@ -736,9 +839,6 @@ const Reply = {
     });
   },
   query: ctx => {
-    if (ctx.inlineQuery.query == "") {
-      return;
-    }
     if (ctx.inlineQuery.query == Reply.lastQuery) {
       Reply.queryCount++;
     } else {
@@ -749,88 +849,80 @@ const Reply = {
     var offset = parseInt(ctx.inlineQuery.offset || 0) * Reply.queryCount;
     var inlineObjects = [];
 
-    extra.forEach((item, i) => {
-      if (item.wikiaThumbnail) {
-        inlineObjects.push({
-          type: "photo",
-          id: "p" + i,
-          photo_url: item.wikiaThumbnail,
-          thumb_url: item.wikiaThumbnail,
-          title: item.name,
-          description: item.type,
-          input_message_content: {
-            message_text: Util.translateItem(item),
-            parse_mode: "Markdown"
-          },
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "SEARCH NEW",
-                  switch_inline_query_current_chat: ""
-                }
-              ]
+    if (ctx.inlineQuery.query == "") {
+      inlineObjects.push({
+        type: "article",
+        id: "searchitem",
+        title: "Start typing to search!",
+        description: "Search Warframes, weapons, drops, items and more...",
+        input_message_content: {
+          message_text: "Mission Failed, We'll Get 'Em Next Time",
+          parse_mode: "Markdown"
+        },
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "GAME OVER",
+                switch_inline_query_current_chat: ""
+              }
             ]
-          }
-        });
-      } else {
-        var info = item
-          ? (item.description
-              ? "\n_" + item.description.replace(/\<([^>]+)\>/g, "") + "_"
-              : "") +
-            (item.polarity
-              ? "\n\tPolarity: `" + item.polarity.replace("_", " ") + "`"
-              : "") +
-            (item.baseDrain && item.fusionLimit
-              ? "\n\tDrain: `" + item.baseDrain + "-" + item.fusionLimit + "`\n"
-              : "")
-          : "";
-
-        var drops = item.drops
-          ? item.drops
-              .splice(0, 5)
-              .reduce(
-                (str, d) =>
-                  (str +=
-                    d.type +
-                    ": `" +
-                    d.location +
-                    "`\n" +
-                    d.rarity +
-                    " (_" +
-                    d.chance * 100 +
-                    "%_)\n"),
-                ""
-              )
-          : "";
-
-        var description = item.description
-          ? item.description.replace(/\<([^>]+)\>/g, "")
-          : "";
-
-        inlineObjects.push({
-          type: "article",
-          id: "a" + i,
-          title: item.name,
-          description: description,
-          input_message_content: {
-            message_text: item.name + info + drops,
-            parse_mode: "Markdown"
-          },
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "SEARCH NEW",
-                  switch_inline_query_current_chat: ""
-                }
+          ]
+        }
+      });
+    } else {
+      extra.forEach((item, i) => {
+        if (item.wikiaThumbnail) {
+          inlineObjects.push({
+            type: "photo",
+            id: "p" + i,
+            photo_url: item.wikiaThumbnail,
+            thumb_url: item.wikiaThumbnail,
+            title: item.name,
+            description: item.type,
+            input_message_content: {
+              message_text: Util.translateItem(item),
+              parse_mode: "Markdown"
+            },
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "SEARCH NEW",
+                    switch_inline_query_current_chat: ""
+                  }
+                ]
               ]
-            ]
-          }
-        });
-      }
-    });
+            }
+          });
+        } else {
+          var description = item.description
+            ? item.description.replace(/\<([^>]+)\>/g, "")
+            : "";
 
+          inlineObjects.push({
+            type: "article",
+            id: "a" + i,
+            title: item.name,
+            description: description,
+            input_message_content: {
+              message_text: Util.translateItem(item),
+              parse_mode: "Markdown"
+            },
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "SEARCH NEW",
+                    switch_inline_query_current_chat: ""
+                  }
+                ]
+              ]
+            }
+          });
+        }
+      });
+    }
     if (inlineObjects.length < 1) {
       inlineObjects.push({
         type: "gif",
@@ -953,9 +1045,9 @@ const Reply = {
     });
   },
   dash: (ctx, isRefresh) => {
+    var msg = ".`_____|` *DASHBOARD* `|_____`\n";
+    /** SORTIE */
     Util.getSortie(sortie => {
-      var msg = "";
-      /** SORTIE */
       if (sortie) {
         msg +=
           ".*Sortie*:\n" +
@@ -977,16 +1069,16 @@ const Reply = {
             ""
           );
       }
+
       /** EVENTS */
       Reply.events(ctx, eventsMsg => {
         if (eventsMsg) {
-          console.log("loaded events");
           msg += "\n.*Events*:\n" + eventsMsg;
         }
+
         /** CETUS */
         Reply.cetus(ctx, cetus => {
           if (cetus) {
-            console.log("loaded cetus");
             msg +=
               "\n.*Cetus*:\n" +
               "_" +
@@ -996,13 +1088,14 @@ const Reply = {
               (cetus.isDay ? "`Day`" : "`Night`") +
               "\n";
           }
+
           /** TRADER */
           Reply.trader(ctx, trader => {
             if (trader) {
-              console.log("loaded trader");
               msg += "\n.*" + trader.trader.character + "*:\n" + trader.message;
             }
 
+            /** ALERTS */
             Reply.checkAlert(
               ctx.session.alertItems,
               isRefresh ? ctx.callbackQuery.from.id : ctx.from.id,
@@ -1012,16 +1105,21 @@ const Reply = {
               false,
               true,
               alertMsg => {
-                /** ALERTS */
                 if (alertMsg) {
-                  msg += "\n.*Alerts and Invasions*:\n" + alertMsg;
+                  msg +=
+                    "\n.*Alerts*:\n" +
+                    alertMsg +
+                    "_To show Invasions and Bounties click on MORE._";
                 }
 
                 const buttons = Telegraf.Extra.markdown().markup(m =>
                   m.inlineKeyboard([
                     [
-                      m.callbackButton("SORTIE", "backCallback"),
-                      m.callbackButton("ALERTS", "showAllCallback"),
+                      m.callbackButton("SORTIE", "factionCallback"),
+                      m.callbackButton("MORE", "showAllCallback")
+                    ],
+                    [
+                      m.callbackButton("SETTINGS", "optionsCallback"),
                       m.callbackButton("REFRESH", "refreshDashCallback")
                     ]
                   ])
@@ -1044,11 +1142,32 @@ const Reply = {
                 } else {
                   ctx.replyWithMarkdown(message, buttons);
                 }
-              }
+              },
+              ["Alert"]
             );
           });
         });
       });
+    });
+  },
+  bounties: (ctx, Callback) => {
+    Util.getBounties(bounty => {
+      var title = "*BOUNTIES:*\n";
+      var expiry = "_" + bounty.eta + "_\n";
+      var jobMsg = bounty.jobs.reduce((str, job) => {
+        return (str +=
+          "*" +
+          job.type +
+          ":*\n`\t\t\t" +
+          job.rewardPool.join(",\n\t\t\t") +
+          "`\n");
+      }, "");
+
+      if (Callback) {
+        Callback(title + expiry + jobMsg);
+      } else {
+        ctx.replyWithMarkdown(title + expiry + jobMsg);
+      }
     });
   }
 };

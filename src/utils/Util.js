@@ -4,6 +4,9 @@ const admins = require("../../admins.json") || [],
   Items = require("warframe-items"),
   moment = require("moment");
 
+const timesFile = "./db/times.json";
+const dbFile = "./db/db.json";
+
 const Util = {
   notified: [],
   slapped: 0,
@@ -27,7 +30,7 @@ const Util = {
     );
   },
   getTimes: Callback => {
-    fs.readFile("./db/times.json", function(err, contents) {
+    fs.readFile(timesFile, function(err, contents) {
       if (err) {
         if (err.code == "ENOENT") {
           Callback([]);
@@ -95,7 +98,7 @@ const Util = {
     return moment(sec * 1000).format("m:ss");
   },
   getSessions: Callback => {
-    fs.readFile("./db/db.json", function(err, contents) {
+    fs.readFile(dbFile, function(err, contents) {
       if (err) {
         console.warn(err);
         Callback([]);
@@ -116,49 +119,6 @@ const Util = {
   },
   getNotified: () => {
     return Util.notified;
-  },
-  saveNotifiedDB: alertIdArr => {
-    fs.readFile("./db/notified.json", function(err, contents) {
-      if (err) {
-        if (err.code != "ENOENT") {
-          console.warn(err);
-        } else {
-          fs.writeFile(
-            "./db/notified.json",
-            JSON.stringify(alertIdArr),
-            err => {
-              throw err;
-            }
-          );
-          return;
-        }
-      }
-      var notified = [];
-      try {
-        notified = JSON.parse(contents);
-      } catch (err) {
-        console.log(Util.getNow(), "Not a valid json", contents);
-      }
-      notified = notified.concat(alertIdArr);
-      fs.writeFile("./db/notified.json", JSON.stringify(notified));
-    });
-  },
-  getNotifiedDB: Callback => {
-    fs.readFile("./db/notified.json", function(err, contents) {
-      if (err) {
-        if (err.code == "ENOENT") {
-          Callback([]);
-        } else console.warn(err);
-      } else {
-        var notified = [];
-        try {
-          notified = JSON.parse(contents);
-        } catch (err) {
-          console.log(Util.getNow(), "Not a valid json", contents);
-        }
-        Callback(notified);
-      }
-    });
   },
   isAssAss: mission => {
     return mission.toUpperCase() == "ASSASSINATION";
@@ -279,10 +239,37 @@ const Util = {
       }
     );
   },
-  getAlerts: (Callback, ignoreNotified) => {
-    if (!Callback) console.log("getAlerts: No Callback");
+  getInfo: (Callback, ignoreNotified, types) => {
+    Util.getAlerts(
+      alerts => {
+        Util.getInvasions(
+          invasions => {
+            Util.getBounties(
+              bounties => {
+                const all = alerts.concat(invasions).concat(bounties);
+                Callback(all);
+              },
+              ignoreNotified,
+              types
+            );
+          },
+          ignoreNotified,
+          types
+        );
+      },
+      ignoreNotified,
+      types
+    );
+  },
+  getAlerts: (Callback, ignoreNotified, types) => {
+    if (!Callback) console.log("getAlerts: No Callback function");
+    if (types) {
+      if (!types.includes("Alert")) {
+        Callback([]);
+        return;
+      }
+    }
     const urlAlerts = "https://api.warframestat.us/pc/alerts";
-    const urlInvasions = "https://api.warframestat.us/pc/invasions";
     const notified = Util.getNotified();
     var found = [];
     request(
@@ -292,13 +279,17 @@ const Util = {
       },
       function(error, response, body) {
         if (error) console.warn(error);
-        if (!body) return;
+        if (!body) {
+          Callback([]);
+          return;
+        }
         const alerts = body;
+        const title = "\n*ALERTS:*\n";
         try {
           alerts.forEach(alert => {
             if (!notified.includes(alert.id) || ignoreNotified) {
               if (!alert.expired) {
-                var str =
+                var msg =
                   "*" +
                   alert.mission.reward.asString +
                   "*\n\t\t\t_" +
@@ -307,15 +298,9 @@ const Util = {
                   alert.mission.type +
                   (alert.mission.nightmare ? " (Nightmare)" : "") +
                   "`\n";
-                var msg = str;
-                // +
-                // "\t\t\t\t`" +
-                // "Alert - " +
-                // alert.mission.type +
-                // (alert.mission.nightmare ? " (Nightmare)" : "") +
-                // "`\n";
                 found.push({
                   item: alert.mission.reward.itemString,
+                  title: title,
                   type: "Alert",
                   id: alert.id,
                   message: msg
@@ -323,59 +308,122 @@ const Util = {
               }
             }
           });
+          Callback(found);
         } catch (err) {
           console.log("error:", err, "with alerts: ", alerts);
         }
+      }
+    );
+  },
+  getInvasions: (Callback, ignoreNotified, types) => {
+    if (!Callback) console.log("getInvasions: No Callback function");
+    if (types) {
+      if (!types.includes("Invasion")) {
+        Callback([]);
+        return;
+      }
+    }
+    const urlInvasions = "https://api.warframestat.us/pc/invasions";
+    const notified = Util.getNotified();
+    var found = [];
+    request(
+      {
+        url: urlInvasions,
+        json: true
+      },
+      function(error, response, body) {
+        if (error) console.warn(error);
+        if (!body) {
+          Callback([]);
+          return;
+        }
+        const title = "\n*INVASIONS:*\n";
+        const invasions = body;
+        invasions.forEach(invasion => {
+          if (!notified.includes(invasion.id) || ignoreNotified) {
+            if (!invasion.completed) {
+              var attackStr = invasion.attackerReward.asString;
+              var defendStr = invasion.defenderReward.asString;
+              var bothMsg =
+                "*" + defendStr + (attackStr ? " | " + attackStr : "") + "*\n";
+              var msg =
+                bothMsg +
+                "\t\t\t\t_" +
+                invasion.eta +
+                (invasion.completion
+                  ? " (" + parseInt(invasion.completion) + "%)"
+                  : "") +
+                "_\t\t\t`" +
+                invasion.desc +
+                "`\n";
 
-        request(
-          {
-            url: urlInvasions,
-            json: true
-          },
-          function(error, response, body) {
-            if (error) console.warn(error);
-            if (!body) return;
-            const invasions = body;
-            invasions.forEach(invasion => {
-              if (!notified.includes(invasion.id) || ignoreNotified) {
-                if (!invasion.completed) {
-                  var attackStr = invasion.attackerReward.asString;
-                  var defendStr = invasion.defenderReward.asString;
-                  var bothMsg =
-                    "*" +
-                    defendStr +
-                    (attackStr ? " | " + attackStr : "") +
-                    "*\n";
-                  var msg =
-                    bothMsg +
-                    "\t\t\t\t_" +
-                    invasion.eta +
-                    (invasion.completion
-                      ? " (" + parseInt(invasion.completion) + "%)"
-                      : "") +
-                    "_\t\t\t`" +
-                    invasion.desc +
-                    "`\n";
+              var len = 29;
+              var att = len * (parseInt(invasion.completion) / 100);
+              var def = len * (1 - parseInt(invasion.completion) / 100);
+              var progress = "`" + "▀".repeat(att) + "▄".repeat(def) + "`";
+              // msg = msg + progress + "\n";
 
-                  var len = 29;
-                  var att = len * (parseInt(invasion.completion) / 100);
-                  var def = len * (1 - parseInt(invasion.completion) / 100);
-                  var progress = "`" + "▀".repeat(att) + "▄".repeat(def) + "`";
-                  // msg = msg + progress + "\n";
-
-                  invasion.desc + "`\n";
-                  found.push({
-                    type: "Invasion",
-                    id: invasion.id,
-                    message: msg
-                  });
-                }
-              }
-            });
-
-            Callback(found);
+              invasion.desc + "`\n";
+              found.push({
+                type: "Invasion",
+                title: title,
+                id: invasion.id,
+                message: msg
+              });
+            }
           }
-        );
+        });
+        Callback(found);
+      }
+    );
+  },
+  getBounties: (Callback, ignoreNotified, types) => {
+    if (!Callback) console.log("getBounties: No Callback function");
+    if (types) {
+      if (!types.includes("Bounty")) {
+        Callback([]);
+        return;
+      }
+    }
+    var url = "https://api.warframestat.us/pc/syndicateMissions";
+    const notified = Util.getNotified();
+    var found = [];
+    request(
+      {
+        url: url,
+        json: true
+      },
+      function(error, response, body) {
+        if (error) console.warn(error);
+        if (!body) {
+          Callback([]);
+          return;
+        }
+        var bounty = body.filter(s => s.syndicate == "Ostrons")[0];
+        if (bounty) {
+          if (!notified.includes(bounty.id) || ignoreNotified) {
+            let title = "*BOUNTIES:*\n\t\t\t_" + bounty.eta + "_";
+            bounty.jobs.forEach((b, i) => {
+              let type =
+                "*" +
+                b.type +
+                "*: " +
+                b.enemyLevels.join("-") +
+                "\n\t\t\t_" +
+                bounty.eta +
+                "_\n";
+              let pool = b.rewardPool.join(", ");
+              found.push({
+                item: pool,
+                type: "Bounty",
+                id: bounty.id,
+                title: title,
+                message: type + "`" + pool + "`\n"
+              });
+            });
+          }
+        }
+        Callback(found);
       }
     );
   },
@@ -421,16 +469,47 @@ const Util = {
       case "Secondary":
       case "Melee":
       case "Primary":
-        return Util.translateWeapon(item);
-      case "Mods":
-        return item; //TODO mod translation
+        return Util.translateWeapon(item); //TODO mod translation
       case "Warframes":
       case "Pets":
       case "Sentinels":
         return Util.translateWarframe(item);
       default:
-        break;
+        return Util.translateOther(item);
     }
+  },
+  translateOther: item => {
+    var info = item
+      ? (item.description
+          ? "\n\t\t\t_" + item.description.replace(/\<([^>]+)\>/g, "") + "_"
+          : "") +
+        (item.polarity
+          ? "\n\t\t\tPolarity: `" + item.polarity.replace("_", " ") + "`"
+          : "") +
+        (item.baseDrain && item.fusionLimit
+          ? "\n\t\t\tDrain: `" + item.baseDrain + "-" + item.fusionLimit + "`"
+          : "")
+      : "";
+
+    var drops = item.drops
+      ? item.drops
+          .splice(0, 5)
+          .reduce(
+            (str, d) =>
+              (str +=
+                d.type +
+                ": `" +
+                d.location +
+                "`\n" +
+                d.rarity +
+                " (_" +
+                d.chance * 100 +
+                "%_)\n"),
+            ""
+          )
+      : "";
+
+    return "*" + item.name + "*" + info + "\n" + drops;
   },
   translateWarframe: warframe => {
     let name = warframe.name + "\n";
@@ -450,7 +529,9 @@ const Util = {
     let vaulted = warframe.vaulted
       ? "*" + warframe.name + " is vaulted!*\n"
       : "";
-    let abilities = Util.translateAbilities(warframe.abilities);
+    let abilities = warframe.abilities
+      ? Util.translateAbilities(warframe.abilities)
+      : "";
     let sprint = "Sprint Speed: `" + warframe.sprint + "`\n";
     let wikiUrl = "[" + warframe.name + "](" + warframe.wikiaUrl + ")\n";
 
@@ -473,7 +554,7 @@ const Util = {
   translateAbilities: abilities => {
     let msg = "*Abilities:*\n";
     abilities.forEach(ability => {
-      let name = "`|`\t\t\t" + ability.name + ": ";
+      let name = "`|`\t\t\t*" + ability.name + "*: ";
       let description = "_" + ability.description + "_\n";
       msg += name + description;
     });
@@ -501,7 +582,9 @@ const Util = {
     let latestPatch = weapon.patchlogs
       ? Util.translatePatchlog(weapon.patchlogs[0]) + "\n"
       : "";
-    let damage = Util.translateDamage(weapon.damageTypes);
+    let damage = weapon.damageTypes
+      ? Util.translateDamage(weapon.damageTypes)
+      : "";
     let wikiUrl = "[" + weapon.name + "](" + weapon.wikiaUrl + ")\n";
 
     let message =
@@ -546,42 +629,10 @@ const Util = {
     let fixes = patchlog.fixes.replace("`", "'");
     let msg =
       title +
-      (additions ? "`|`\t\t\tAdditions: _" + additions + "_\n" : "") +
-      (changes ? "`|`\t\t\tChanges: _" + changes + "_\n" : "") +
-      (fixes ? "`|`\t\t\tFixes: _" + fixes + "_\n" : "");
+      (additions ? "`|`\t\t\t*Additions*: _" + additions + "_\n" : "") +
+      (changes ? "`|`\t\t\t*Changes*: _" + changes + "_\n" : "") +
+      (fixes ? "`|`\t\t\t*Fixes*: _" + fixes + "_\n" : "");
     return msg;
-  },
-  generateData: () => {
-    const frames = Array.from(new Items(["Warframes"]));
-    var data = [];
-    var ind = 0;
-    frames.forEach(f => {
-      if (f.health && f.type == "Warframe") {
-        if (f.name == "Excalibur Umbra") {
-          console.log(f);
-        }
-        data.push({
-          warframe: f.name,
-          index: ind,
-          health: f.health,
-          shield: f.shield,
-          countPatches: f.patchlogs ? f.patchlogs.length : 0,
-          patches: f.patchlogs ? f.patchlogs.map(p => p.date) : [],
-          sprint: f.sprint,
-          power: f.power,
-          stamina: f.stamina,
-          armor: f.armor,
-          buildPrice: f.buildPrice,
-          buildTime: f.buildTime,
-          tradable: f.tradable ? 1 : 0
-        });
-        ind++;
-      }
-    });
-    // data.sort((a, b) => a.health - b.health);
-    fs.writeFile("./stats/data.json", JSON.stringify(data), err =>
-      console.log(err)
-    );
   }
 };
 
