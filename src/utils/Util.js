@@ -622,7 +622,7 @@ const Util = {
   },
   translatePatchlog: patchlog => {
     if (!patchlog) return;
-    let title = "*Patchlog:* \n";
+    let title = "*Latest Patchlog:* \n";
     let name = patchlog.name;
     let additions = patchlog.additions.replace("`", "'");
     let changes = patchlog.changes.replace("`", "'");
