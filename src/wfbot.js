@@ -34,23 +34,28 @@ bot.help(ctx => {
   /sortie - Get current sortie info
   /alert - Set up filter for alert notification
             \`/alert <keyword> [keywords]\`
+  /alerts - Lists current active alerts
   /cetus - Cetus day/night information
   /trader - Void Trader Information
   /events - Shows current events
-  /alerts - Lists current active alerts
+  /bounties - Lists current Bounties with rewards
   /filter - Lists current alert filter
   /bosses - Lists possible sortie bosses
   /missions - Lists possible sortie missions
   /admins - Lists all admins
+  /help - Shows this, duh!
+  /drops - Starts inline search
   /optin - Shortcut for subscribing to sortie notification
   /optout - Shortcut for unsubscribing to sortie notification
   /cleardb - !! Clears your database entry, use with care !!
-
   /time^^ - Save mission time to \`times.json\`
             \`/time <mission>, <mm:ss> [, boss]\`
 
 *INLINE*
   Get mission drops with: \`@BerndDasBot <Search>\`
+
+*PSST*
+  Find some hidden easter eggs. ;)
 
 *LEGEND*
 \`\`\`
@@ -67,6 +72,10 @@ bot.command("sortie", ctx => {
   });
 });
 bot.command("alert", ctx => {
+  Util.addUser(ctx);
+  Reply.alert(ctx, bot);
+});
+bot.command("notify", ctx => {
   Util.addUser(ctx);
   Reply.alert(ctx, bot);
 });
@@ -96,11 +105,23 @@ bot.command("missions", ctx => {
   Util.addUser(ctx);
   Reply.listMissions(ctx);
 });
+bot.command("mission", ctx => {
+  Util.addUser(ctx);
+  Reply.listMissions(ctx);
+});
 bot.command("bosses", ctx => {
   Util.addUser(ctx);
   Reply.listBosses(ctx);
 });
+bot.command("boss", ctx => {
+  Util.addUser(ctx);
+  Reply.listBosses(ctx);
+});
 bot.command("filter", ctx => {
+  Util.addUser(ctx);
+  Reply.listAlert(ctx);
+});
+bot.command("filters", ctx => {
   Util.addUser(ctx);
   Reply.listAlert(ctx);
 });
@@ -120,13 +141,41 @@ bot.command("dash", ctx => {
   Util.addUser(ctx);
   Reply.dash(ctx);
 });
+bot.command("dashboard", ctx => {
+  Util.addUser(ctx);
+  Reply.dash(ctx);
+});
 bot.command("events", ctx => {
+  Util.addUser(ctx);
+  Reply.events(ctx);
+});
+bot.command("event", ctx => {
   Util.addUser(ctx);
   Reply.events(ctx);
 });
 bot.command("bounties", ctx => {
   Util.addUser(ctx);
   Reply.bounties(ctx);
+});
+bot.command("bounty", ctx => {
+  Util.addUser(ctx);
+  Reply.bounties(ctx);
+});
+bot.command("drops", ctx => {
+  Util.addUser(ctx);
+  Reply.drops(ctx);
+});
+bot.command("drop", ctx => {
+  Util.addUser(ctx);
+  Reply.drops(ctx);
+});
+bot.command("items", ctx => {
+  Util.addUser(ctx);
+  Reply.drops(ctx);
+});
+bot.command("item", ctx => {
+  Util.addUser(ctx);
+  Reply.drops(ctx);
 });
 
 // drops

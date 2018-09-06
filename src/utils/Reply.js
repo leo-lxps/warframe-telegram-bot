@@ -557,7 +557,7 @@ const Reply = {
         inline_keyboard: [
           [
             {
-              text: "SLAP | " + Util.slapped,
+              text: "SLAP | 👋 " + Util.slapped,
               callback_data: "slapCallback"
             }
           ]
@@ -919,18 +919,25 @@ const Reply = {
       });
     }
     if (inlineObjects.length < 1) {
+      const gifs = [
+        "https://i.imgur.com/X8Z1NwC.gif",
+        "https://i.imgur.com/ARwMmsw.gif",
+        "https://i.imgur.com/WjfSkSS.gif",
+        "https://i.imgur.com/HxJXv3F.gif"
+      ];
+      var randGif = gifs[Math.floor(Math.random() * gifs.length)];
       inlineObjects.push({
         type: "gif",
         id: "valkyr",
-        gif_url: "https://i.imgur.com/kUnMZyk.gif",
-        thumb_url: "https://i.imgur.com/kUnMZyk.gif",
+        gif_url: randGif,
+        thumb_url: randGif,
         title: "ASS",
         description: "NOICE",
         reply_markup: {
           inline_keyboard: [
             [
               {
-                text: "SLAP | " + Util.slapped,
+                text: "SLAP | 👋 " + Util.slapped,
                 callback_data: "slapCallback"
               }
             ]
@@ -1041,6 +1048,16 @@ const Reply = {
   },
   dash: (ctx, isRefresh) => {
     var msg = ".`_____|` *DASHBOARD* `|_____`\n";
+    if (isRefresh) {
+      ctx.editMessageText(
+        Util.formatMessage(msg),
+        Telegraf.Extra.markdown().markup(m =>
+          m.inlineKeyboard([
+            [m.callbackButton("\nLoading *Sortie*...", "nothing")]
+          ])
+        )
+      );
+    }
     /** SORTIE */
     Util.getSortie(sortie => {
       if (sortie) {
@@ -1065,10 +1082,36 @@ const Reply = {
           );
       }
 
+      if (isRefresh) {
+        ctx.editMessageText(
+          Util.formatMessage(msg),
+          Telegraf.Extra.markdown().markup(m =>
+            m.inlineKeyboard([
+              [m.callbackButton("\nLoading *Event* information...", "nothing")]
+            ])
+          )
+        );
+      }
+
       /** EVENTS */
       Reply.events(ctx, eventsMsg => {
         if (eventsMsg) {
           msg += "\n.*Events*:\n" + eventsMsg;
+        }
+        if (isRefresh) {
+          ctx.editMessageText(
+            Util.formatMessage(msg),
+            Telegraf.Extra.markdown().markup(m =>
+              m.inlineKeyboard([
+                [
+                  m.callbackButton(
+                    "\nLoading *Cetus* information...",
+                    "nothing"
+                  )
+                ]
+              ])
+            )
+          );
         }
 
         /** CETUS */
@@ -1083,13 +1126,37 @@ const Reply = {
               (cetus.isDay ? "`Day`" : "`Night`") +
               "\n";
           }
+          if (isRefresh) {
+            ctx.editMessageText(
+              Util.formatMessage(msg),
+              Telegraf.Extra.markdown().markup(m =>
+                m.inlineKeyboard([
+                  [
+                    m.callbackButton(
+                      "\nLoading *Trader* information...",
+                      "nothing"
+                    )
+                  ]
+                ])
+              )
+            );
+          }
 
           /** TRADER */
           Reply.trader(ctx, trader => {
             if (trader) {
               msg += "\n.*" + trader.trader.character + "*:\n" + trader.message;
             }
-
+            if (isRefresh) {
+              ctx.editMessageText(
+                Util.formatMessage(msg),
+                Telegraf.Extra.markdown().markup(m =>
+                  m.inlineKeyboard([
+                    [m.callbackButton("\nLoading *Alerts*...", "nothing")]
+                  ])
+                )
+              );
+            }
             /** ALERTS */
             Reply.checkAlert(
               ctx.session.alertItems,
@@ -1120,25 +1187,16 @@ const Reply = {
                   ])
                 );
 
-                var message = "";
-                msg.split(/\r|\n/).forEach(line => {
-                  message +=
-                    (line.charAt(0) == "."
-                      ? line.substring(1)
-                      : line.charAt("\t")
-                        ? "`|`\t\t\t" + line
-                        : line) + "\n";
-                });
-
                 if (isRefresh) {
-                  ctx.editMessageText(message, buttons).catch(err => {
-                    console.log(err);
-                  });
+                  ctx
+                    .editMessageText(Util.formatMessage(msg), buttons)
+                    .catch(err => {
+                      console.log(err);
+                    });
                 } else {
-                  ctx.replyWithMarkdown(message, buttons);
+                  ctx.replyWithMarkdown(Util.formatMessage(msg), buttons);
                 }
-              },
-              ["Alert"]
+              }
             );
           });
         });
@@ -1164,6 +1222,19 @@ const Reply = {
         ctx.replyWithMarkdown(title + expiry + jobMsg);
       }
     });
+  },
+  drops: ctx => {
+    const itemsStr = ctx.state.command.args;
+    ctx.replyWithMarkdown(
+      "Use _inline mode_ to start searching for *Warframes, Weapons and Items*: \n`" +
+        itemsStr +
+        "`",
+      Telegraf.Extra.markdown().markup(m =>
+        m.inlineKeyboard([
+          [m.switchToCurrentChatButton("START SEARCH", itemsStr)]
+        ])
+      )
+    );
   }
 };
 

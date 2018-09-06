@@ -633,6 +633,18 @@ const Util = {
       (changes ? "`|`\t\t\t*Changes*: _" + changes + "_\n" : "") +
       (fixes ? "`|`\t\t\t*Fixes*: _" + fixes + "_\n" : "");
     return msg;
+  },
+  formatMessage: rawMsg => {
+    var message = "";
+    rawMsg.split(/\r|\n/).forEach(line => {
+      message +=
+        (line.charAt(0) == "."
+          ? line.substring(1)
+          : line.charAt("\t")
+            ? "`|`\t\t\t" + line
+            : line) + "\n";
+    });
+    return message;
   }
 };
 
