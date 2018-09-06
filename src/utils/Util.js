@@ -184,8 +184,9 @@ const Util = {
         json: true
       },
       function(error, response, body) {
-        if (error) {
-          console.warn(error);
+        if (error) console.warn(error);
+        if (!body || !Util.IsJsonString(body)) {
+          Callback([]);
           return;
         }
         Callback(body);
@@ -202,7 +203,10 @@ const Util = {
       },
       function(error, response, body) {
         if (error) console.warn(err);
-        if (!body) return;
+        if (!body || !Util.IsJsonString(body)) {
+          Callback([]);
+          return;
+        }
         Callback(body);
       }
     );
@@ -217,7 +221,10 @@ const Util = {
       },
       function(error, response, body) {
         if (error) console.warn(err);
-        if (!body) return;
+        if (!body || !Util.IsJsonString(body)) {
+          Callback([]);
+          return;
+        }
 
         Callback(body);
       }
@@ -233,7 +240,10 @@ const Util = {
       },
       function(error, response, body) {
         if (error) console.warn(err);
-        if (!body) return;
+        if (!body || !Util.IsJsonString(body)) {
+          Callback([]);
+          return;
+        }
 
         Callback(body);
       }
@@ -279,7 +289,7 @@ const Util = {
       },
       function(error, response, body) {
         if (error) console.warn(error);
-        if (!body) {
+        if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
         }
@@ -333,7 +343,7 @@ const Util = {
       },
       function(error, response, body) {
         if (error) console.warn(error);
-        if (!body) {
+        if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
         }
@@ -395,7 +405,7 @@ const Util = {
       },
       function(error, response, body) {
         if (error) console.warn(error);
-        if (!body) {
+        if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
         }
@@ -436,7 +446,11 @@ const Util = {
       },
       function(error, response, body) {
         if (error) console.warn(error);
-        if (!body) return;
+        if (!body || !Util.IsJsonString(body)) {
+          Callback([]);
+          return;
+        }
+        Callback(body);
       }
     );
   },
@@ -466,6 +480,9 @@ const Util = {
   translateItem: item => {
     switch (item.category) {
       case "Archwing":
+        if (item.type == "Archwing") {
+          return Util.translateWarframe(item);
+        }
       case "Secondary":
       case "Melee":
       case "Primary":
@@ -645,6 +662,12 @@ const Util = {
             : line) + "\n";
     });
     return message;
+  },
+  IsJsonString: str => {
+    if (Array.isArray(str) || typeof str === "object") {
+      return true;
+    }
+    return false;
   }
 };
 

@@ -639,75 +639,72 @@ const Reply = {
         break;
     }
   },
-  listMissions: ctx => {
+  getSortieInfo: Callback => {
     request(
       {
         url: "https://api.warframestat.us/sortie",
         json: true
       },
       function(error, response, body) {
-        if (!body) return;
+        if (!body || !Util.IsJsonString(body)) {
+          Callback({});
+          return;
+        }
         if (error) console.warn(error);
         const sortieInfo = body;
-
-        var missionsArr = [];
-
-        Util.getAvgTimes(times => {
-          sortieInfo.endStates.forEach(state => {
-            state.regions.forEach(region => {
-              region.missions.forEach(mission => {
-                let ind = missionsArr.find(
-                  m => m.mission.toUpperCase() == mission.toUpperCase()
-                );
-                if (!ind) {
-                  var time = times.find(
-                    t => t.mission.toUpperCase() == mission.toUpperCase()
-                  );
-                  missionsArr.push({
-                    mission: mission,
-                    time: time ? time.minutes + ":" + time.seconds : undefined
-                  });
-                }
-              });
-            });
-          });
-          ctx.replyWithMarkdown(
-            missionsArr.reduce(
-              (str, m) =>
-                (str += m.mission + (m.time ? " (" + m.time + ")" : "") + "\n"),
-              ""
-            )
-          );
-        });
+        Callback(sortieInfo);
       }
     );
   },
-  listBosses: ctx => {
-    request(
-      {
-        url: "https://api.warframestat.us/sortie",
-        json: true
-      },
-      function(error, response, body) {
-        if (error) console.warn(error);
-        if (!body) return;
-        const sortieInfo = body;
+  listMissions: ctx => {
+    Util.getSortieInfo(sortieInfo => {
+      var missionsArr = [];
 
-        var bossesArr = [];
-
+      Util.getAvgTimes(times => {
         sortieInfo.endStates.forEach(state => {
-          if (!bossesArr.includes(state.bossName)) {
-            bossesArr.push(state.bossName);
-          }
+          state.regions.forEach(region => {
+            region.missions.forEach(mission => {
+              let ind = missionsArr.find(
+                m => m.mission.toUpperCase() == mission.toUpperCase()
+              );
+              if (!ind) {
+                var time = times.find(
+                  t => t.mission.toUpperCase() == mission.toUpperCase()
+                );
+                missionsArr.push({
+                  mission: mission,
+                  time: time ? time.minutes + ":" + time.seconds : undefined
+                });
+              }
+            });
+          });
         });
         ctx.replyWithMarkdown(
-          bossesArr.reduce((str, m) => (str += m + "\n"), ""),
-          Telegraf.Extra.markdown().markup(m =>
-            m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
+          missionsArr.reduce(
+            (str, m) =>
+              (str += m.mission + (m.time ? " (" + m.time + ")" : "") + "\n"),
+            ""
           )
         );
-      }
-    );
+      });
+    });
+  },
+  listBosses: ctx => {
+    Util.getSortieInfo(sortieInfo => {
+      var bossesArr = [];
+
+      sortieInfo.endStates.forEach(state => {
+        if (!bossesArr.includes(state.bossName)) {
+          bossesArr.push(state.bossName);
+        }
+      });
+      ctx.replyWithMarkdown(
+        bossesArr.reduce((str, m) => (str += m + "\n"), ""),
+        Telegraf.Extra.markdown().markup(m =>
+          m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
+        )
+      );
+    });
   },
   time: ctx => {
     if (!Util.isAdmin(ctx)) {
@@ -739,59 +736,47 @@ const Reply = {
           );
           return;
         } else {
-          request(
-            {
-              url: "https://api.warframestat.us/sortie",
-              json: true
-            },
-            function(error, response, body) {
-              if (error) console.warn(error);
-              if (!body) return;
-              const sortieInfo = body;
+          Util.getSortieInfo(sortieInfo => {
+            var possibleMissions = [];
+            var possibleBosses = [];
 
-              var possibleMissions = [];
-              var possibleBosses = [];
-
-              sortieInfo.endStates.forEach(state => {
-                state.regions.forEach(region => {
-                  region.missions.forEach(actualMission => {
-                    if (
-                      !possibleMissions.includes(actualMission.toUpperCase())
-                    ) {
-                      possibleMissions.push(actualMission.toUpperCase());
-                    }
-                  });
+            sortieInfo.endStates.forEach(state => {
+              state.regions.forEach(region => {
+                region.missions.forEach(actualMission => {
+                  if (!possibleMissions.includes(actualMission.toUpperCase())) {
+                    possibleMissions.push(actualMission.toUpperCase());
+                  }
                 });
-                if (!possibleBosses.includes(state.bossName.toUpperCase())) {
-                  possibleBosses.push(state.bossName.toUpperCase());
-                }
               });
-
-              const validMission = possibleMissions.includes(
-                mission.toUpperCase()
-              );
-              const validTime = Util.parseTime(time);
-
-              if (!validMission) {
-                ctx.replyWithMarkdown("not a valid Mission: " + mission);
-                return;
-              } else if (!validTime) {
-                ctx.replyWithMarkdown(
-                  "not a valid Time: " + time + ", use format mm:ss "
-                );
-                return;
-              } else if (args.length == 3) {
-                if (!possibleBosses.includes(boss.toUpperCase())) {
-                  ctx.replyWithMarkdown("not a valid Boss: " + boss);
-                  return;
-                } else {
-                  Reply.addTime(ctx, prevTimes, mission, time, boss);
-                }
-              } else {
-                Reply.addTime(ctx, prevTimes, mission, time);
+              if (!possibleBosses.includes(state.bossName.toUpperCase())) {
+                possibleBosses.push(state.bossName.toUpperCase());
               }
+            });
+
+            const validMission = possibleMissions.includes(
+              mission.toUpperCase()
+            );
+            const validTime = Util.parseTime(time);
+
+            if (!validMission) {
+              ctx.replyWithMarkdown("not a valid Mission: " + mission);
+              return;
+            } else if (!validTime) {
+              ctx.replyWithMarkdown(
+                "not a valid Time: " + time + ", use format mm:ss "
+              );
+              return;
+            } else if (args.length == 3) {
+              if (!possibleBosses.includes(boss.toUpperCase())) {
+                ctx.replyWithMarkdown("not a valid Boss: " + boss);
+                return;
+              } else {
+                Reply.addTime(ctx, prevTimes, mission, time, boss);
+              }
+            } else {
+              Reply.addTime(ctx, prevTimes, mission, time);
             }
-          );
+          });
         }
       } else {
         ctx.replyWithMarkdown(
@@ -982,7 +967,10 @@ const Reply = {
       },
       function(error, response, body) {
         if (error) console.warn(err);
-        if (!body) return;
+        if (!body || !Util.IsJsonString(body)) {
+          Callback({});
+          return;
+        }
         if (Callback) {
           Callback(body);
         } else {
@@ -1048,6 +1036,7 @@ const Reply = {
   },
   dash: (ctx, isRefresh) => {
     var msg = ".`_____|` *DASHBOARD* `|_____`\n";
+
     if (isRefresh) {
       ctx.editMessageText(
         Util.formatMessage(msg),
@@ -1098,6 +1087,7 @@ const Reply = {
         if (eventsMsg) {
           msg += "\n.*Events*:\n" + eventsMsg;
         }
+
         if (isRefresh) {
           ctx.editMessageText(
             Util.formatMessage(msg),
@@ -1117,6 +1107,7 @@ const Reply = {
         /** CETUS */
         Reply.cetus(ctx, cetus => {
           if (cetus) {
+            console.log(cetus)
             msg +=
               "\n.*Cetus*:\n" +
               "_" +
