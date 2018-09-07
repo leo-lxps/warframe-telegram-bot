@@ -32,7 +32,7 @@ const Reply = {
         )
       )
       .catch(err => {
-        if (err.code != 400) console.warn(err);
+        if (err.code != 400) console.log(err);
       });
   },
   info: ctx => {
@@ -62,7 +62,7 @@ const Reply = {
           )
         )
         .catch(err => {
-          if (err.code != 400) console.warn(err);
+          if (err.code != 400) console.log(err);
         });
     });
   },
@@ -184,7 +184,7 @@ const Reply = {
       if (!ignoreNotified && !editMessage && !returnString) return;
       if (editMessage) {
         shortApi.editMessageText(noAlerts, more).catch(err => {
-          if (err.code != 400) console.warn(err);
+          if (err.code != 400) console.log(err);
         });
       } else if (returnString) {
         Callback(noAlerts);
@@ -248,7 +248,7 @@ const Reply = {
             if (alerts.length > 0) {
               if (editMessage) {
                 shortApi.editMessageText(msg(alerts), less).catch(err => {
-                  if (err.code != 400) console.warn(err);
+                  if (err.code != 400) console.log(err);
                 });
               } else if (returnString) {
                 Callback(msg(alerts));
@@ -259,7 +259,7 @@ const Reply = {
             } else {
               if (editMessage) {
                 shortApi.editMessageText(noAlerts, less).catch(err => {
-                  if (err.code != 400) console.warn(err);
+                  if (err.code != 400) console.log(err);
                 });
               } else if (returnString) {
                 Callback(noAlerts);
@@ -276,7 +276,7 @@ const Reply = {
                 if (alerts.length > 0) {
                   if (editMessage) {
                     shortApi.editMessageText(msg(alerts), more).catch(err => {
-                      if (err.code != 400) console.warn(err);
+                      if (err.code != 400) console.log(err);
                     });
                   } else if (returnString) {
                     Callback(msg(alerts));
@@ -319,7 +319,7 @@ const Reply = {
                 shortApi
                   .editMessageText(msg(userAlerts), moreUser)
                   .catch(err => {
-                    if (err.code != 400) console.warn(err);
+                    if (err.code != 400) console.log(err);
                   });
               } else if (returnString) {
                 Callback(msg(userAlerts));
@@ -330,7 +330,7 @@ const Reply = {
               //no alert found with filter
               if (editMessage) {
                 shortApi.editMessageText(noAlerts, moreUser).catch(err => {
-                  if (err.code != 400) console.warn(err);
+                  if (err.code != 400) console.log(err);
                 });
               } else if (returnString) {
                 Callback("");
@@ -376,7 +376,7 @@ const Reply = {
         ) + "\n_Add items with /alert <item>_";
       if (editMessage) {
         ctx.editMessageText(msg, remApp).catch(err => {
-          console.warn(err);
+          console.log(err);
         });
       } else {
         ctx.replyWithMarkdown(msg, remApp);
@@ -384,7 +384,7 @@ const Reply = {
     } else {
       if (editMessage) {
         ctx.editMessageText(noItemsMsg, ok).catch(err => {
-          console.warn(err);
+          console.log(err);
         });
       } else {
         ctx.replyWithMarkdown(noItemsMsg, ok);
@@ -409,17 +409,17 @@ const Reply = {
         )
       )
       .catch(err => {
-        if (err.code != 400) console.warn(err);
+        if (err.code != 400) console.log(err);
       });
   },
   cancel: ctx => {
     ctx.editMessageText("Canceled!").catch(err => {
-      if (err.code != 400) console.warn(err);
+      if (err.code != 400) console.log(err);
     });
   },
   apply: ctx => {
     ctx.editMessageText("Applied!").catch(err => {
-      if (err.code != 400) console.warn(err);
+      if (err.code != 400) console.log(err);
     });
   },
   callback: ctx => {
@@ -628,7 +628,7 @@ const Reply = {
     switch (updateType) {
       case 1:
         ctx.editMessageText(message, menu).catch(err => {
-          if (err.code != 400) console.warn(err);
+          if (err.code != 400) console.log(err);
         });
         break;
       case 2:
@@ -650,7 +650,7 @@ const Reply = {
           Callback({});
           return;
         }
-        if (error) console.warn(error);
+        if (error) console.log(error);
         const sortieInfo = body;
         Callback(sortieInfo);
       }
@@ -716,7 +716,7 @@ const Reply = {
       if (err) {
         if (err.code == "ENOENT") {
           console.log(Util.getNow(), "No times found, creating new file");
-        } else console.warn(err);
+        } else console.log(err);
       }
       let prevTimes = timesRaw ? JSON.parse(timesRaw) : [];
 
@@ -805,7 +805,7 @@ const Reply = {
     let data = JSON.stringify(prevTimes, null, 2);
 
     fs.writeFile("./db/times.json", data, err => {
-      if (err) console.warn(err);
+      if (err) console.log(err);
       console.log(Util.getNow(), "Data written to file");
       ctx.replyWithMarkdown(
         "Added *" +
@@ -955,7 +955,7 @@ const Reply = {
         cache_time: 0,
         next_offset: 50
       })
-      .catch(err => console.warn(err));
+      .catch(err => console.log(err));
     // });
   },
   cetus: (ctx, Callback) => {
@@ -966,7 +966,7 @@ const Reply = {
         json: true
       },
       function(error, response, body) {
-        if (error) console.warn(err);
+        if (error) console.log(err);
         if (!body || !Util.IsJsonString(body)) {
           Callback({});
           return;

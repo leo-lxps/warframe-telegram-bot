@@ -177,6 +177,11 @@ bot.command("item", ctx => {
   Util.addUser(ctx);
   Reply.drops(ctx);
 });
+bot.command("save", ctx => {
+  Util.getInfo(alerts => {
+    Util.saveAlerts(alerts);
+  });
+});
 
 // drops
 bot.on("inline_query", ctx => {
@@ -249,10 +254,13 @@ cron.schedule(
             );
           }
         });
-        Util.getInfo(alerts => alerts.forEach(al => Util.addNotified(al.id)));
+        Util.getInfo(alerts => {
+          alerts.forEach(al => Util.addNotified(al.id));
+          Util.saveAlerts(alerts);
+        });
       });
     } catch (err) {
-      console.warn(Util.getNow(), err);
+      console.log(Util.getNow(), err);
     }
   },
   true

@@ -6,6 +6,7 @@ const admins = require("../../admins.json") || [],
 
 const timesFile = "./db/times.json";
 const dbFile = "./db/db.json";
+const statsFile = "./db/stats.json";
 
 const Util = {
   notified: [],
@@ -22,7 +23,7 @@ const Util = {
       },
       function(error, response, body) {
         if (error) {
-          console.warn(error);
+          console.log(error);
           return;
         }
         Callback(body);
@@ -34,7 +35,7 @@ const Util = {
       if (err) {
         if (err.code == "ENOENT") {
           Callback([]);
-        } else console.warn(err);
+        } else console.log(err);
       } else {
         var times = [];
         try {
@@ -100,7 +101,7 @@ const Util = {
   getSessions: Callback => {
     fs.readFile(dbFile, function(err, contents) {
       if (err) {
-        console.warn(err);
+        console.log(err);
         Callback([]);
       } else {
         Callback(
@@ -169,7 +170,7 @@ const Util = {
       },
       function(error, response, body) {
         if (error) {
-          console.warn(error);
+          console.log(error);
           return;
         }
         Callback(body);
@@ -184,7 +185,7 @@ const Util = {
         json: true
       },
       function(error, response, body) {
-        if (error) console.warn(error);
+        if (error) console.log(error);
         if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
@@ -202,7 +203,7 @@ const Util = {
         json: true
       },
       function(error, response, body) {
-        if (error) console.warn(err);
+        if (error) console.log(err);
         if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
@@ -220,7 +221,7 @@ const Util = {
         json: true
       },
       function(error, response, body) {
-        if (error) console.warn(err);
+        if (error) console.log(err);
         if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
@@ -239,7 +240,7 @@ const Util = {
         json: true
       },
       function(error, response, body) {
-        if (error) console.warn(err);
+        if (error) console.log(err);
         if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
@@ -288,7 +289,7 @@ const Util = {
         json: true
       },
       function(error, response, body) {
-        if (error) console.warn(error);
+        if (error) console.log(error);
         if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
@@ -309,6 +310,8 @@ const Util = {
                   (alert.mission.nightmare ? " (Nightmare)" : "") +
                   "`\n";
                 found.push({
+                  eta: alert.eta,
+                  start: moment(),
                   item: alert.mission.reward.itemString,
                   title: title,
                   type: "Alert",
@@ -342,7 +345,7 @@ const Util = {
         json: true
       },
       function(error, response, body) {
-        if (error) console.warn(error);
+        if (error) console.log(error);
         if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
@@ -375,6 +378,9 @@ const Util = {
 
               invasion.desc + "`\n";
               found.push({
+                eta: invasion.eta,
+                start: moment(),
+                item: invasion.rewardTypes.join(", "),
                 type: "Invasion",
                 title: title,
                 id: invasion.id,
@@ -404,7 +410,7 @@ const Util = {
         json: true
       },
       function(error, response, body) {
-        if (error) console.warn(error);
+        if (error) console.log(error);
         if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
@@ -424,6 +430,8 @@ const Util = {
                 "_\n";
               let pool = b.rewardPool.join(", ");
               found.push({
+                eta: bounty.eta,
+                start: moment(),
                 item: pool,
                 type: "Bounty",
                 id: bounty.id,
@@ -445,7 +453,7 @@ const Util = {
         json: true
       },
       function(error, response, body) {
-        if (error) console.warn(error);
+        if (error) console.log(error);
         if (!body || !Util.IsJsonString(body)) {
           Callback([]);
           return;
@@ -668,6 +676,28 @@ const Util = {
       return true;
     }
     return false;
+  },
+  getStats: Callback => {
+    fs.readFile(statsFile, (err, statsRaw) => {
+      if (err) {
+        if (err.code == "ENOENT") {
+          console.log(Util.getNow(), "No stats found, creating new file");
+        } else console.log(err);
+      }
+      Callback(statsRaw ? JSON.parse(statsRaw) : {});
+    });
+  },
+  saveAlerts: alerts => {
+    Util.getStats(stats => {
+      stats.allAlerts = Array.isArray(stats.allAlerts)
+        ? stats.allAlerts.concat(alerts.filter(a => !stats.allAlerts.find(s => s.id == a.id)))
+        : alerts;
+      let data = JSON.stringify(stats, null, 2);
+      fs.writeFile(statsFile, data, err => {
+        if (err) console.log(err);
+        console.log(Util.getNow(), "Stats written to file");
+      });
+    });
   }
 };
 
