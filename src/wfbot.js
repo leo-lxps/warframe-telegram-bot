@@ -181,6 +181,9 @@ bot.command("save", ctx => {
   Util.getInfo(alerts => {
     Util.saveAlerts(alerts);
   });
+  Util.getSortie(sortie => {
+    Util.saveSortie(sortie);
+  });
 });
 
 // drops
@@ -225,6 +228,7 @@ cron.schedule(
               Reply.sortie(0, sortie, 2, user.id, bot);
             }
           });
+          Util.saveSortie(sortie);
         } else {
           console.log(now, "New Sortie was send");
         }

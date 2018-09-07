@@ -161,6 +161,24 @@ const Reply = {
     }
     const bot = shortApi.telegram;
 
+    const selected = "🗸";
+
+    const alertBtn = types
+      ? types.includes("Alert")
+        ? "ALERTS " + selected
+        : "ALERTS"
+      : "ALERTS " + selected;
+    const invasionsBtn = types
+      ? types.includes("Invasion")
+        ? "INVASIONS " + selected
+        : "INVASIONS"
+      : "INVASIONS";
+    const bountyBtn = types
+      ? types.includes("Bounty")
+        ? "BOUNTIES " + selected
+        : "BOUNTIES"
+      : "BOUNTIES";
+
     const allBtn = types ? types[0] + ".showAllCallback" : "showAllCallback";
     const filterBtn = types
       ? types[0] + ".showFilterCallback"
@@ -215,9 +233,9 @@ const Reply = {
                 m.callbackButton("REFRESH", "refreshAllAlertsCallback")
               ],
               [
-                m.callbackButton("ALERTS", "Alert.showAllCallback"),
-                m.callbackButton("INVASIONS", "Invasion.showAllCallback"),
-                m.callbackButton("BOUNTIES", "Bounty.showAllCallback")
+                m.callbackButton(alertBtn, "Alert.showAllCallback"),
+                m.callbackButton(invasionsBtn, "Invasion.showAllCallback"),
+                m.callbackButton(bountyBtn, "Bounty.showAllCallback")
               ],
               [
                 m.callbackButton("DASHBOARD", "dashCallback"),
@@ -233,9 +251,9 @@ const Reply = {
                 m.callbackButton("REFRESH", refreshBtn)
               ],
               [
-                m.callbackButton("ALERTS", "Alert.showFilterCallback"),
-                m.callbackButton("INVASIONS", "Invasion.showFilterCallback"),
-                m.callbackButton("BOUNTIES", "Bounty.showFilterCallback")
+                m.callbackButton(alertBtn, "Alert.showFilterCallback"),
+                m.callbackButton(invasionsBtn, "Invasion.showFilterCallback"),
+                m.callbackButton(bountyBtn, "Bounty.showFilterCallback")
               ],
               [
                 m.callbackButton("DASHBOARD", "dashCallback"),
@@ -304,9 +322,9 @@ const Reply = {
                   m.callbackButton("REFRESH", refreshBtn)
                 ],
                 [
-                  m.callbackButton("ALERTS", "Alert.showFilterCallback"),
-                  m.callbackButton("INVASIONS", "Invasion.showFilterCallback"),
-                  m.callbackButton("BOUNTIES", "Bounty.showFilterCallback")
+                  m.callbackButton(alertBtn, "Alert.showFilterCallback"),
+                  m.callbackButton(invasionsBtn, "Invasion.showFilterCallback"),
+                  m.callbackButton(bountyBtn, "Bounty.showFilterCallback")
                 ],
                 [
                   m.callbackButton("DASHBOARD", "dashCallback"),
@@ -638,23 +656,6 @@ const Reply = {
         ctx.replyWithMarkdown(message, menu);
         break;
     }
-  },
-  getSortieInfo: Callback => {
-    request(
-      {
-        url: "https://api.warframestat.us/sortie",
-        json: true
-      },
-      function(error, response, body) {
-        if (!body || !Util.IsJsonString(body)) {
-          Callback({});
-          return;
-        }
-        if (error) console.log(error);
-        const sortieInfo = body;
-        Callback(sortieInfo);
-      }
-    );
   },
   listMissions: ctx => {
     Util.getSortieInfo(sortieInfo => {
@@ -1107,7 +1108,7 @@ const Reply = {
         /** CETUS */
         Reply.cetus(ctx, cetus => {
           if (cetus) {
-            console.log(cetus)
+            console.log(cetus);
             msg +=
               "\n.*Cetus*:\n" +
               "_" +

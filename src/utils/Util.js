@@ -30,6 +30,23 @@ const Util = {
       }
     );
   },
+  getSortieInfo: Callback => {
+    request(
+      {
+        url: "https://api.warframestat.us/sortie",
+        json: true
+      },
+      function(error, response, body) {
+        if (!body || !Util.IsJsonString(body)) {
+          Callback({});
+          return;
+        }
+        if (error) console.log(error);
+        const sortieInfo = body;
+        Callback(sortieInfo);
+      }
+    );
+  },
   getTimes: Callback => {
     fs.readFile(timesFile, function(err, contents) {
       if (err) {
@@ -90,8 +107,6 @@ const Util = {
           boss: am.boss
         };
       });
-
-      console.log(avgMissionTimes);
       Callback(avgMissionTimes);
     });
   },
@@ -690,8 +705,24 @@ const Util = {
   saveAlerts: alerts => {
     Util.getStats(stats => {
       stats.allAlerts = Array.isArray(stats.allAlerts)
-        ? stats.allAlerts.concat(alerts.filter(a => !stats.allAlerts.find(s => s.id == a.id)))
+        ? stats.allAlerts.concat(
+            alerts.filter(a => !stats.allAlerts.find(s => s.id == a.id))
+          )
         : alerts;
+      let data = JSON.stringify(stats, null, 2);
+      fs.writeFile(statsFile, data, err => {
+        if (err) console.log(err);
+        console.log(Util.getNow(), "Stats written to file");
+      });
+    });
+  },
+  saveSortie: sortie => {
+    Util.getStats(stats => {
+      stats.allSorties = Array.isArray(stats.allSorties)
+        ? !stats.allSorties.find(s => s.id == sortie.id)
+          ? stats.allSorties.concat([sortie])
+          : stats.allSorties
+        : [sortie];
       let data = JSON.stringify(stats, null, 2);
       fs.writeFile(statsFile, data, err => {
         if (err) console.log(err);
