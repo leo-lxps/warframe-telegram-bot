@@ -161,7 +161,7 @@ const Reply = {
     }
     const bot = shortApi.telegram;
 
-    const selected = "🗸";
+    const selected = "<";
 
     const alertBtn = types
       ? types.includes("Alert")
@@ -186,6 +186,9 @@ const Reply = {
     const refreshBtn = types
       ? types[0] + ".refreshAlertsCallback"
       : "refreshAlertsCallback";
+    const refreshAllBtn = types
+      ? types[0] + ".refreshAllAlertsCallback"
+      : "refreshAllAlertsCallback";
     const noAlerts =
       "No " + (types ? types.join("/") : "Alerts/Invasions/Bounties");
     const more = Telegraf.Extra.markdown().markup(m =>
@@ -230,7 +233,7 @@ const Reply = {
               [
                 m.callbackButton("LESS", filterBtn),
                 m.callbackButton("FILTER", "filterCallback"),
-                m.callbackButton("REFRESH", "refreshAllAlertsCallback")
+                m.callbackButton("REFRESH", refreshAllBtn)
               ],
               [
                 m.callbackButton(alertBtn, "Alert.showAllCallback"),
@@ -532,8 +535,19 @@ const Reply = {
     } else if (btn.includes("bossCallback")) {
       ctx.answerCbQuery("Your actions have consequences...", true);
     } else if (btn.includes("refreshAllAlertsCallback")) {
+      let type = btn.includes(".") ? [btn.split(".")[0]] : ["Alert"];
       ctx.answerCbQuery("Refreshing...");
-      Reply.checkAlert(ctx.session.alertItems, userId, ctx, true, true, true);
+      Reply.checkAlert(
+        ctx.session.alertItems,
+        userId,
+        ctx,
+        true,
+        true,
+        true,
+        false,
+        false,
+        type
+      );
     } else if (btn.includes("refreshAlertsCallback")) {
       let type = btn.includes(".") ? [btn.split(".")[0]] : ["Alert"];
       ctx.answerCbQuery("Refreshing your alerts...");
@@ -563,6 +577,53 @@ const Reply = {
     } else if (btn == "slapCallback") {
       ctx.answerCbQuery("Slap me harder daddy!");
       Reply.slap(ctx);
+    } else if (btn == "moreCallback") {
+      ctx.answerCbQuery("Showing More!");
+      const buttons = {
+        inline_keyboard: [
+          [
+            { text: "SORTIE", callback_data: "factionCallback" },
+            { text: "REFRESH", callback_data: "refreshDashCallback" }
+          ],
+          [
+            { text: "TRADER", callback_data: "traderCallback" },
+            { text: "ALERTS", callback_data: "showAllCallback" }
+          ],
+          [
+            { text: "MISSIONS", callback_data: "missionsCallback" },
+            { text: "BOSSES", callback_data: "bossesCallback" },
+            { text: "EVENTS", callback_data: "eventsCallback" }
+          ],
+          [
+            { text: "LESS", callback_data: "lessCallback" },
+            { text: "SETTINGS", callback_data: "optionsCallback" }
+          ]
+        ]
+      };
+      ctx.editMessageReplyMarkup(buttons);
+    } else if (btn == "traderCallback") {
+      ctx.answerCbQuery("Loading Trader...");
+      Reply.trader(ctx);
+    } else if (btn == "lessCallback") {
+      ctx.answerCbQuery("Hiding Buttons!");
+      const buttons = {
+        inline_keyboard: [
+          [
+            { text: "MORE", callback_data: "moreCallback" },
+            { text: "REFRESH", callback_data: "refreshDashCallback" }
+          ]
+        ]
+      };
+      ctx.editMessageReplyMarkup(buttons);
+    } else if (btn == "missionsCallback") {
+      ctx.answerCbQuery("Loading Missions...");
+      Reply.listMissions(ctx, true);
+    } else if (btn == "bossesCallback") {
+      ctx.answerCbQuery("Loading Bosses...");
+      Reply.listBosses(ctx, true);
+    } else if (btn == "eventsCallback") {
+      ctx.answerCbQuery("Loading Events...");
+      Reply.events(ctx, undefined, true);
     }
   },
   slap: ctx => {
@@ -657,7 +718,7 @@ const Reply = {
         break;
     }
   },
-  listMissions: ctx => {
+  listMissions: (ctx, isEdit) => {
     Util.getSortieInfo(sortieInfo => {
       var missionsArr = [];
 
@@ -680,31 +741,62 @@ const Reply = {
             });
           });
         });
-        ctx.replyWithMarkdown(
-          missionsArr.reduce(
-            (str, m) =>
-              (str += m.mission + (m.time ? " (" + m.time + ")" : "") + "\n"),
-            ""
-          )
+        var msg = missionsArr.reduce(
+          (str, m) =>
+            (str +=
+              "*" +
+              m.mission +
+              "*" +
+              (m.time ? " (" + m.time + ")" : "") +
+              "\n"),
+          ""
         );
+        var dashBtn = Telegraf.Extra.markdown().markup(m =>
+          m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
+        );
+
+        if (isEdit) {
+          ctx.editMessageText(msg, dashBtn);
+        } else {
+          ctx.replyWithMarkdown(msg, dashBtn);
+        }
       });
     });
   },
-  listBosses: ctx => {
+  listBosses: (ctx, isEdit) => {
     Util.getSortieInfo(sortieInfo => {
       var bossesArr = [];
+      Util.getAvgTimes(times => {
+        sortieInfo.endStates.forEach(state => {
+          if (!bossesArr.includes(state.bossName)) {
+            var time = times.find(
+              t =>
+                t.boss
+                  ? t.boss.toUpperCase() == state.bossName.toUpperCase()
+                  : false
+            );
+            bossesArr.push({
+              boss: state.bossName,
+              time: time ? time.minutes + ":" + time.seconds : undefined
+            });
+          }
+        });
 
-      sortieInfo.endStates.forEach(state => {
-        if (!bossesArr.includes(state.bossName)) {
-          bossesArr.push(state.bossName);
+        var msg = bossesArr.reduce(
+          (str, m) =>
+            (str +=
+              "*" + m.boss + "*" + (m.time ? " (" + m.time + ")" : "") + "\n"),
+          ""
+        );
+        var dashBtn = Telegraf.Extra.markdown().markup(m =>
+          m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
+        );
+        if (isEdit) {
+          ctx.editMessageText(msg, dashBtn);
+        } else {
+          ctx.replyWithMarkdown(msg, dashBtn);
         }
       });
-      ctx.replyWithMarkdown(
-        bossesArr.reduce((str, m) => (str += m + "\n"), ""),
-        Telegraf.Extra.markdown().markup(m =>
-          m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
-        )
-      );
     });
   },
   time: ctx => {
@@ -835,7 +927,7 @@ const Reply = {
         type: "article",
         id: "searchitem",
         title: "Start typing to search!",
-        description: "Search Warframes, weapons, drops, items and more...",
+        description: "Search Warframes, weapons, drops, items and more...\n",
         input_message_content: {
           message_text: "Mission Failed, We'll Get 'Em Next Time",
           parse_mode: "Markdown"
@@ -986,8 +1078,21 @@ const Reply = {
       var message = "";
       if (trader.active) {
         message +=
-          "_" + trader.endString + "_\n*Relay*:\t\t`" + trader.location + "´\n";
-        message += trader.inventory.join(" - ");
+          "_" + trader.endString + "_\n*Relay*:\t\t`" + trader.location + "`\n";
+        if (!Callback) {
+          message += trader.inventory.reduce(
+            (str, t) =>
+              (str +=
+                "\t\t\t-\t_" +
+                t.item +
+                "_ `(" +
+                t.ducats +
+                "d, " +
+                t.credits +
+                "cr)`\n"),
+            ""
+          );
+        }
       } else {
         message +=
           "_" +
@@ -999,11 +1104,16 @@ const Reply = {
       if (Callback) {
         Callback({ message: message, trader: trader });
       } else {
-        ctx.replyWithMarkdown(message);
+        ctx.replyWithMarkdown(
+          message,
+          Telegraf.Extra.markdown().markup(m =>
+            m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
+          )
+        );
       }
     });
   },
-  events: (ctx, Callback) => {
+  events: (ctx, Callback, isEdit) => {
     Util.getEvents(events => {
       const msg = events.reduce(
         (str, e) =>
@@ -1023,177 +1133,324 @@ const Reply = {
               : "\n")),
         ""
       );
+      var dashBtn = Telegraf.Extra.markdown().markup(m =>
+        m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
+      );
       if (Callback) {
         Callback(msg);
+      } else if (isEdit) {
+        ctx.editMessageText(msg, dashBtn);
       } else {
-        ctx.replyWithMarkdown(
-          msg,
-          Telegraf.Extra.markdown().markup(m =>
-            m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
-          )
-        );
+        ctx.replyWithMarkdown(msg, dashBtn);
       }
     });
   },
   dash: (ctx, isRefresh) => {
-    var msg = ".`_____|` *DASHBOARD* `|_____`\n";
-
+    var msg = ".`>` *DASHBOARD* `<`\n\n";
+    const buttons = Telegraf.Extra.markdown().markup(m =>
+      m.inlineKeyboard([
+        [
+          m.callbackButton("MORE", "moreCallback"),
+          m.callbackButton("REFRESH", "refreshDashCallback")
+        ]
+      ])
+    );
     if (isRefresh) {
       ctx.editMessageText(
         Util.formatMessage(msg),
         Telegraf.Extra.markdown().markup(m =>
-          m.inlineKeyboard([
-            [m.callbackButton("\nLoading *Sortie*...", "nothing")]
-          ])
+          m.inlineKeyboard([[m.callbackButton("Loading Sortie...", "nothing")]])
         )
       );
-    }
-    /** SORTIE */
-    Util.getSortie(sortie => {
-      if (sortie) {
-        msg +=
-          ".*Sortie*:\n" +
-          "_" +
-          sortie.eta +
-          "_\n" +
-          sortie.variants.reduce(
-            (str, m) =>
-              (str +=
-                "*" +
-                m.missionType +
-                "*:\n\t\t\t\t`" +
-                (m.modifier.includes(":")
-                  ? m.modifier.split(":")[0] +
-                    "`\n\t\t\t\t`" +
-                    m.modifier.split(":")[1]
-                  : m.modifier) +
-                "`\n"),
-            ""
-          );
-      }
 
-      if (isRefresh) {
+      /** SORTIE */
+      Util.getSortie(sortie => {
+        if (sortie) {
+          msg +=
+            ".*Sortie*:\n" +
+            "_" +
+            sortie.eta +
+            "_\n" +
+            sortie.variants.reduce(
+              (str, m) =>
+                (str +=
+                  "*" +
+                  m.missionType +
+                  "*:\n\t\t\t\t`" +
+                  (m.modifier.includes(":")
+                    ? m.modifier.split(":")[0] +
+                      "`\n\t\t\t\t`" +
+                      m.modifier.split(":")[1]
+                    : m.modifier) +
+                  "`\n"),
+              ""
+            );
+        }
+
         ctx.editMessageText(
           Util.formatMessage(msg),
           Telegraf.Extra.markdown().markup(m =>
             m.inlineKeyboard([
-              [m.callbackButton("\nLoading *Event* information...", "nothing")]
+              [m.callbackButton("Loading Event information...", "nothing")]
             ])
           )
         );
-      }
 
-      /** EVENTS */
-      Reply.events(ctx, eventsMsg => {
-        if (eventsMsg) {
-          msg += "\n.*Events*:\n" + eventsMsg;
-        }
+        /** EVENTS */
+        Reply.events(ctx, eventsMsg => {
+          if (eventsMsg) {
+            msg += "\n.*Events*:\n" + eventsMsg;
+          }
 
-        if (isRefresh) {
           ctx.editMessageText(
             Util.formatMessage(msg),
             Telegraf.Extra.markdown().markup(m =>
               m.inlineKeyboard([
-                [
-                  m.callbackButton(
-                    "\nLoading *Cetus* information...",
-                    "nothing"
-                  )
-                ]
+                [m.callbackButton("Loading Cetus information...", "nothing")]
               ])
             )
           );
-        }
 
-        /** CETUS */
-        Reply.cetus(ctx, cetus => {
-          if (cetus) {
-            console.log(cetus);
-            msg +=
-              "\n.*Cetus*:\n" +
-              "_" +
-              cetus.timeLeft +
-              "_\n" +
-              "*Time*: " +
-              (cetus.isDay ? "`Day`" : "`Night`") +
-              "\n";
-          }
-          if (isRefresh) {
+          /** CETUS */
+          Reply.cetus(ctx, cetus => {
+            if (cetus) {
+              msg +=
+                "\n.*Cetus*:\n" +
+                "_" +
+                cetus.timeLeft +
+                "_\n" +
+                "*Time*: " +
+                (cetus.isDay ? "`Day`" : "`Night`") +
+                "\n";
+            }
             ctx.editMessageText(
               Util.formatMessage(msg),
               Telegraf.Extra.markdown().markup(m =>
                 m.inlineKeyboard([
-                  [
-                    m.callbackButton(
-                      "\nLoading *Trader* information...",
-                      "nothing"
-                    )
-                  ]
+                  [m.callbackButton("Loading Trader information...", "nothing")]
                 ])
               )
             );
-          }
 
-          /** TRADER */
-          Reply.trader(ctx, trader => {
-            if (trader) {
-              msg += "\n.*" + trader.trader.character + "*:\n" + trader.message;
-            }
-            if (isRefresh) {
+            /** TRADER */
+            Reply.trader(ctx, trader => {
+              if (trader) {
+                msg +=
+                  "\n.*" + trader.trader.character + "*:\n" + trader.message;
+              }
               ctx.editMessageText(
                 Util.formatMessage(msg),
                 Telegraf.Extra.markdown().markup(m =>
                   m.inlineKeyboard([
-                    [m.callbackButton("\nLoading *Alerts*...", "nothing")]
+                    [m.callbackButton("Loading Alerts...", "nothing")]
                   ])
                 )
               );
-            }
-            /** ALERTS */
-            Reply.checkAlert(
-              ctx.session.alertItems,
-              isRefresh ? ctx.callbackQuery.from.id : ctx.from.id,
-              ctx,
-              true,
-              false,
-              false,
-              true,
-              alertMsg => {
-                if (alertMsg) {
-                  msg +=
-                    "\n.*Alerts*:\n" +
-                    alertMsg +
-                    "_To show Invasions and Bounties click on MORE._";
-                }
 
-                const buttons = Telegraf.Extra.markdown().markup(m =>
-                  m.inlineKeyboard([
-                    [
-                      m.callbackButton("SORTIE", "factionCallback"),
-                      m.callbackButton("MORE", "showAllCallback")
-                    ],
-                    [
-                      m.callbackButton("SETTINGS", "optionsCallback"),
-                      m.callbackButton("REFRESH", "refreshDashCallback")
-                    ]
-                  ])
+              /** ALERTS */
+              try {
+                Reply.checkAlert(
+                  ctx.session.alertItems,
+                  isRefresh ? ctx.callbackQuery.from.id : ctx.from.id,
+                  ctx,
+                  true,
+                  false,
+                  false,
+                  true,
+                  alertMsg => {
+                    if (alertMsg) {
+                      msg +=
+                        "\n.*Alerts*:\n" +
+                        alertMsg +
+                        "_To show Invasions and Bounties click on MORE._";
+                    }
+
+                    ctx
+                      .editMessageText(Util.formatMessage(msg), buttons)
+                      .catch(err => {
+                        console.log(err);
+                      });
+                  }
                 );
+              } catch (err) {
+                msg += "\n.*Alerts*:\nCould not load alerts...";
 
-                if (isRefresh) {
-                  ctx
-                    .editMessageText(Util.formatMessage(msg), buttons)
-                    .catch(err => {
-                      console.log(err);
-                    });
-                } else {
-                  ctx.replyWithMarkdown(Util.formatMessage(msg), buttons);
-                }
+                ctx
+                  .editMessageText(Util.formatMessage(msg), buttons)
+                  .catch(err => {
+                    console.log(err);
+                  });
               }
-            );
+            });
           });
         });
       });
-    });
+    } else {
+      ctx
+        .replyWithMarkdown(
+          Util.formatMessage(msg),
+          Telegraf.Extra.markdown().markup(m =>
+            m.inlineKeyboard([
+              [m.callbackButton("Loading Sortie...", "nothing")]
+            ])
+          )
+        )
+        .then(m => {
+          /** SORTIE */
+          Util.getSortie(sortie => {
+            if (sortie) {
+              msg +=
+                ".*Sortie*:\n" +
+                "_" +
+                sortie.eta +
+                "_\n" +
+                sortie.variants.reduce(
+                  (str, m) =>
+                    (str +=
+                      "*" +
+                      m.missionType +
+                      "*:\n\t\t\t\t`" +
+                      (m.modifier.includes(":")
+                        ? m.modifier.split(":")[0] +
+                          "`\n\t\t\t\t`" +
+                          m.modifier.split(":")[1]
+                        : m.modifier) +
+                      "`\n"),
+                  ""
+                );
+            }
+
+            ctx.telegram.editMessageText(
+              m.chat.id,
+              m.message_id,
+              undefined,
+              Util.formatMessage(msg),
+              Telegraf.Extra.markdown().markup(m =>
+                m.inlineKeyboard([
+                  [m.callbackButton("Loading Event information...", "nothing")]
+                ])
+              )
+            );
+
+            /** EVENTS */
+            Reply.events(ctx, eventsMsg => {
+              if (eventsMsg) {
+                msg += "\n.*Events*:\n" + eventsMsg;
+              }
+
+              ctx.telegram.editMessageText(
+                m.chat.id,
+                m.message_id,
+                undefined,
+                Util.formatMessage(msg),
+                Telegraf.Extra.markdown().markup(m =>
+                  m.inlineKeyboard([
+                    [
+                      m.callbackButton(
+                        "Loading Cetus information...",
+                        "nothing"
+                      )
+                    ]
+                  ])
+                )
+              );
+
+              /** CETUS */
+              Reply.cetus(ctx, cetus => {
+                if (cetus) {
+                  msg +=
+                    "\n.*Cetus*:\n" +
+                    "_" +
+                    cetus.timeLeft +
+                    "_\n" +
+                    "*Time*: " +
+                    (cetus.isDay ? "`Day`" : "`Night`") +
+                    "\n";
+                }
+                ctx.telegram.editMessageText(
+                  m.chat.id,
+                  m.message_id,
+                  undefined,
+                  Util.formatMessage(msg),
+                  Telegraf.Extra.markdown().markup(m =>
+                    m.inlineKeyboard([
+                      [
+                        m.callbackButton(
+                          "Loading Trader information...",
+                          "nothing"
+                        )
+                      ]
+                    ])
+                  )
+                );
+
+                /** TRADER */
+                Reply.trader(ctx, trader => {
+                  if (trader) {
+                    msg +=
+                      "\n.*" +
+                      trader.trader.character +
+                      "*:\n" +
+                      trader.message;
+                  }
+
+                  ctx.telegram.editMessageText(
+                    m.chat.id,
+                    m.message_id,
+                    undefined,
+                    Util.formatMessage(msg),
+                    Telegraf.Extra.markdown().markup(m =>
+                      m.inlineKeyboard([
+                        [m.callbackButton("Loading Alerts...", "nothing")]
+                      ])
+                    )
+                  );
+
+                  /** ALERTS */
+                  try {
+                    Reply.checkAlert(
+                      ctx.session.alertItems,
+                      isRefresh ? ctx.callbackQuery.from.id : ctx.from.id,
+                      ctx,
+                      true,
+                      false,
+                      false,
+                      true,
+                      alertMsg => {
+                        if (alertMsg) {
+                          msg +=
+                            "\n.*Alerts*:\n" +
+                            alertMsg +
+                            "_To show Invasions and Bounties click on MORE._";
+                        }
+                        ctx.telegram.editMessageText(
+                          m.chat.id,
+                          m.message_id,
+                          undefined,
+                          Util.formatMessage(msg),
+                          buttons
+                        );
+                        // ctx.replyWithMarkdown(Util.formatMessage(msg), buttons);
+                      }
+                    );
+                  } catch (err) {
+                    msg += "\n.*Alerts*:\nCould not load alerts...";
+                    if (isRefresh) {
+                      ctx
+                        .editMessageText(Util.formatMessage(msg), buttons)
+                        .catch(err => {
+                          console.log(err);
+                        });
+                    } else {
+                      ctx.replyWithMarkdown(Util.formatMessage(msg), buttons);
+                    }
+                  }
+                });
+              });
+            });
+          });
+        });
+    }
   },
   bounties: (ctx, Callback) => {
     Util.getBounties(bounty => {
@@ -1227,6 +1484,9 @@ const Reply = {
         ])
       )
     );
+  },
+  newTrader: (trader, userId, bot) => {
+    /** NOTIFY USERS ABOUT TRADER ITEMS */
   }
 };
 

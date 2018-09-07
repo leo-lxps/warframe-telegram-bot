@@ -729,6 +729,20 @@ const Util = {
         console.log(Util.getNow(), "Stats written to file");
       });
     });
+  },
+  saveTrader: trader => {
+    Util.getStats(stats => {
+      stats.allTrader = Array.isArray(stats.allTrader)
+        ? !stats.allTrader.find(s => s.id == trader.id)
+          ? stats.allTrader.concat([trader])
+          : stats.allTrader
+        : [trader];
+      let data = JSON.stringify(stats, null, 2);
+      fs.writeFile(statsFile, data, err => {
+        if (err) console.log(err);
+        console.log(Util.getNow(), "Stats written to file");
+      });
+    });
   }
 };
 

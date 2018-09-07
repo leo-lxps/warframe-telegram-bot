@@ -184,6 +184,9 @@ bot.command("save", ctx => {
   Util.getSortie(sortie => {
     Util.saveSortie(sortie);
   });
+  Util.getTrader(trader => {
+    Util.saveTrader(trader);
+  });
 });
 
 // drops
@@ -296,6 +299,7 @@ cron.schedule(
               }
             }
           });
+          Util.saveTrader(trader);
         } else {
           console.log(Util.getNow(), "Trader not active");
         }
