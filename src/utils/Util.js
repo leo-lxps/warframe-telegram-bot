@@ -712,7 +712,7 @@ const Util = {
       let data = JSON.stringify(stats, null, 2);
       fs.writeFile(statsFile, data, err => {
         if (err) console.log(err);
-        console.log(Util.getNow(), "Stats written to file");
+        console.log(Util.getNow(), "Alerts written to stats file");
       });
     });
   },
@@ -726,7 +726,7 @@ const Util = {
       let data = JSON.stringify(stats, null, 2);
       fs.writeFile(statsFile, data, err => {
         if (err) console.log(err);
-        console.log(Util.getNow(), "Stats written to file");
+        console.log(Util.getNow(), "Sortie written to stats file");
       });
     });
   },
@@ -740,7 +740,7 @@ const Util = {
       let data = JSON.stringify(stats, null, 2);
       fs.writeFile(statsFile, data, err => {
         if (err) console.log(err);
-        console.log(Util.getNow(), "Stats written to file");
+        console.log(Util.getNow(), "Trader written to stats file");
       });
     });
   }

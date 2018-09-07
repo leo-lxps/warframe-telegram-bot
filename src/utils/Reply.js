@@ -723,47 +723,59 @@ const Reply = {
       var missionsArr = [];
 
       Util.getAvgTimes(times => {
-        sortieInfo.endStates.forEach(state => {
-          state.regions.forEach(region => {
-            region.missions.forEach(mission => {
-              let ind = missionsArr.find(
-                m => m.mission.toUpperCase() == mission.toUpperCase()
-              );
-              if (!ind) {
-                var time = times.find(
-                  t => t.mission.toUpperCase() == mission.toUpperCase()
+        Reply.listBosses(ctx, false, str => {
+          sortieInfo.endStates.forEach(state => {
+            state.regions.forEach(region => {
+              region.missions.forEach(mission => {
+                let ind = missionsArr.find(
+                  m => m.mission.toUpperCase() == mission.toUpperCase()
                 );
-                missionsArr.push({
-                  mission: mission,
-                  time: time ? time.minutes + ":" + time.seconds : undefined
-                });
-              }
+                if (!ind) {
+                  var time = times.find(
+                    t => t.mission.toUpperCase() == mission.toUpperCase()
+                  );
+                  if (!Util.isAssAss(mission)) {
+                    missionsArr.push({
+                      mission: mission,
+                      time: time ? time.minutes + ":" + time.seconds : undefined
+                    });
+                  } else {
+                    missionsArr.push({
+                      mission: mission,
+                      bosses: str
+                    });
+                  }
+                }
+              });
             });
           });
-        });
-        var msg = missionsArr.reduce(
-          (str, m) =>
-            (str +=
-              "*" +
-              m.mission +
-              "*" +
-              (m.time ? " (" + m.time + ")" : "") +
-              "\n"),
-          ""
-        );
-        var dashBtn = Telegraf.Extra.markdown().markup(m =>
-          m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
-        );
+          var msg = missionsArr.reduce(
+            (str, m) =>
+              (str +=
+                "\t-\t_" +
+                m.mission +
+                "_" +
+                (m.time ? " `(" + m.time + ")`" : "") +
+                (m.bosses
+                  ? " \n`|`\t\t\t" + m.bosses.split("\n").join("\n`|`\t\t\t")
+                  : "") +
+                "\n"),
+            "*MISSIONS:*\n"
+          );
+          var dashBtn = Telegraf.Extra.markdown().markup(m =>
+            m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
+          );
 
-        if (isEdit) {
-          ctx.editMessageText(msg, dashBtn);
-        } else {
-          ctx.replyWithMarkdown(msg, dashBtn);
-        }
+          if (isEdit) {
+            ctx.editMessageText(msg, dashBtn);
+          } else {
+            ctx.replyWithMarkdown(msg, dashBtn);
+          }
+        });
       });
     });
   },
-  listBosses: (ctx, isEdit) => {
+  listBosses: (ctx, isEdit, Callback) => {
     Util.getSortieInfo(sortieInfo => {
       var bossesArr = [];
       Util.getAvgTimes(times => {
@@ -785,13 +797,19 @@ const Reply = {
         var msg = bossesArr.reduce(
           (str, m) =>
             (str +=
-              "*" + m.boss + "*" + (m.time ? " (" + m.time + ")" : "") + "\n"),
-          ""
+              "\t-\t_" +
+              m.boss +
+              "_" +
+              (m.time ? " `(" + m.time + ")`" : "") +
+              "\n"),
+          "*BOSSES:*\n"
         );
         var dashBtn = Telegraf.Extra.markdown().markup(m =>
           m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
         );
-        if (isEdit) {
+        if (Callback) {
+          Callback(msg);
+        } else if (isEdit) {
           ctx.editMessageText(msg, dashBtn);
         } else {
           ctx.replyWithMarkdown(msg, dashBtn);
