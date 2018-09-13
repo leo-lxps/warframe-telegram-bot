@@ -36,7 +36,9 @@ const Reply = {
       });
   },
   info: ctx => {
-    var answer = "Click on the buttons to find out more!";
+    var answer = `
+    \`>\` *SORTIE INFO* \`<\`
+    _Click on the buttons to find out more!_`;
     Util.getSortie(sortie => {
       if (!sortie) return;
       ctx
@@ -167,7 +169,7 @@ const Reply = {
       ? types.includes("Alert")
         ? "ALERTS " + selected
         : "ALERTS"
-      : "ALERTS " + selected;
+      : "ALERTS";
     const invasionsBtn = types
       ? types.includes("Invasion")
         ? "INVASIONS " + selected
@@ -249,7 +251,7 @@ const Reply = {
           const more = Telegraf.Extra.markdown().markup(m =>
             m.inlineKeyboard([
               [
-                m.callbackButton("MORE", allBtn),
+                m.callbackButton("ALL", allBtn),
                 m.callbackButton("FILTER", "filterCallback"),
                 m.callbackButton("REFRESH", refreshBtn)
               ],
@@ -320,7 +322,7 @@ const Reply = {
             const moreUser = Telegraf.Extra.markdown().markup(m =>
               m.inlineKeyboard([
                 [
-                  m.callbackButton("MORE", allBtn),
+                  m.callbackButton("ALL", allBtn),
                   m.callbackButton("FILTER", "filterCallback"),
                   m.callbackButton("REFRESH", refreshBtn)
                 ],
@@ -520,7 +522,7 @@ const Reply = {
       );
     } else if (btn.includes("showFilterCallback")) {
       let type = btn.includes(".") ? [btn.split(".")[0]] : ["Alert"];
-      ctx.answerCbQuery("Loading custom alerts!");
+      ctx.answerCbQuery("Loading filtered " + type + "!");
       Reply.checkAlert(
         ctx.session.alertItems,
         userId,
@@ -536,7 +538,7 @@ const Reply = {
       ctx.answerCbQuery("Your actions have consequences...", true);
     } else if (btn.includes("refreshAllAlertsCallback")) {
       let type = btn.includes(".") ? [btn.split(".")[0]] : ["Alert"];
-      ctx.answerCbQuery("Refreshing...");
+      ctx.answerCbQuery("Refreshing " + type + "...");
       Reply.checkAlert(
         ctx.session.alertItems,
         userId,
@@ -550,7 +552,7 @@ const Reply = {
       );
     } else if (btn.includes("refreshAlertsCallback")) {
       let type = btn.includes(".") ? [btn.split(".")[0]] : ["Alert"];
-      ctx.answerCbQuery("Refreshing your alerts...");
+      ctx.answerCbQuery("Refreshing filtered " + type + "...");
       Reply.checkAlert(
         ctx.session.alertItems,
         userId,
@@ -582,11 +584,15 @@ const Reply = {
       const buttons = {
         inline_keyboard: [
           [
-            { text: "SORTIE", callback_data: "factionCallback" },
+            { text: "TRADER", callback_data: "traderCallback" },
+            {
+              text: "SEARCH",
+              switch_inline_query_current_chat: ""
+            },
             { text: "REFRESH", callback_data: "refreshDashCallback" }
           ],
           [
-            { text: "TRADER", callback_data: "traderCallback" },
+            { text: "SORTIE", callback_data: "factionCallback" },
             { text: "ALERTS", callback_data: "showAllCallback" }
           ],
           [
@@ -603,13 +609,13 @@ const Reply = {
       ctx.editMessageReplyMarkup(buttons);
     } else if (btn == "traderCallback") {
       ctx.answerCbQuery("Loading Trader...");
-      Reply.trader(ctx);
+      Reply.trader(ctx, undefined, undefined, undefined, true);
     } else if (btn == "lessCallback") {
       ctx.answerCbQuery("Hiding Buttons!");
       const buttons = {
         inline_keyboard: [
           [
-            { text: "MORE", callback_data: "moreCallback" },
+            { text: "ACTIONS", callback_data: "moreCallback" },
             { text: "REFRESH", callback_data: "refreshDashCallback" }
           ]
         ]
@@ -652,7 +658,7 @@ const Reply = {
     Util.addUser(ctx, true);
   },
   sortie: (ctx, sortie, updateType, userId, bot) => {
-    var message = "";
+    var message = "`>` *SORTIE* `<`\n\n";
     if (!sortie) return;
     if (!sortie.variants) {
       console.log(Util.getNow(), "Not responding");
@@ -988,7 +994,7 @@ const Reply = {
           });
         } else {
           var description = item.description
-            ? item.description.replace(/\<([^>]+)\>/g, "")
+            ? item.description.replace(/\<([^>]+)\>/g, "").replace(/[*`_]/g, "")
             : "";
 
           inlineObjects.push({
@@ -1090,13 +1096,17 @@ const Reply = {
       }
     );
   },
-  trader: (ctx, Callback) => {
+  trader: (ctx, Callback, userId, bot, isEdit) => {
     Util.getTrader(trader => {
       if (!trader) return;
-      var message = "";
+      var message = Callback ? "" : "`>` *TRADER* `<`\n\n";
       if (trader.active) {
         message +=
-          "_" + trader.endString + "_\n*Relay*:\t\t`" + trader.location + "`\n";
+          "_" +
+          trader.endString +
+          "_\n*Location*:\t\t`" +
+          trader.location +
+          "`\n";
         if (!Callback) {
           message += trader.inventory.reduce(
             (str, t) =>
@@ -1115,19 +1125,21 @@ const Reply = {
         message +=
           "_" +
           trader.startString +
-          "_\n*Relay*:\t\t`" +
+          "_\n*Will be at*:\t\t`" +
           trader.location +
           "`\n";
       }
+      var dashBtn = Telegraf.Extra.markdown().markup(m =>
+        m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
+      );
       if (Callback) {
         Callback({ message: message, trader: trader });
+      } else if (userId && bot) {
+        bot.telegram.sendMessage(userId, message, dashBtn);
+      } else if (isEdit) {
+        ctx.editMessageText(message, dashBtn);
       } else {
-        ctx.replyWithMarkdown(
-          message,
-          Telegraf.Extra.markdown().markup(m =>
-            m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
-          )
-        );
+        ctx.replyWithMarkdown(message, dashBtn);
       }
     });
   },
@@ -1144,7 +1156,7 @@ const Reply = {
             "_\n\t\t\t\t\t\t" +
             e.description +
             ": `" +
-            e.node +
+            (e.node ? e.node : e.health ? e.health : "") +
             "`" +
             (e.rewards.length > 0
               ? "\n\t\t\t\t\t\t" + e.rewards.join(" - ")
@@ -1168,7 +1180,7 @@ const Reply = {
     const buttons = Telegraf.Extra.markdown().markup(m =>
       m.inlineKeyboard([
         [
-          m.callbackButton("MORE", "moreCallback"),
+          m.callbackButton("ACTIONS", "moreCallback"),
           m.callbackButton("REFRESH", "refreshDashCallback")
         ]
       ])
@@ -1277,10 +1289,7 @@ const Reply = {
                   true,
                   alertMsg => {
                     if (alertMsg) {
-                      msg +=
-                        "\n.*Alerts*:\n" +
-                        alertMsg +
-                        "_To show Invasions and Bounties click on MORE._";
+                      msg += "\n.*Alerts*:\n" + alertMsg;
                     }
 
                     ctx
@@ -1436,10 +1445,7 @@ const Reply = {
                       true,
                       alertMsg => {
                         if (alertMsg) {
-                          msg +=
-                            "\n.*Alerts*:\n" +
-                            alertMsg +
-                            "_To show Invasions and Bounties click on MORE._";
+                          msg += "\n.*Alerts*:\n" + alertMsg;
                         }
                         ctx.telegram.editMessageText(
                           m.chat.id,
@@ -1448,7 +1454,6 @@ const Reply = {
                           Util.formatMessage(msg),
                           buttons
                         );
-                        // ctx.replyWithMarkdown(Util.formatMessage(msg), buttons);
                       }
                     );
                   } catch (err) {
@@ -1474,19 +1479,21 @@ const Reply = {
     Util.getBounties(bounty => {
       var title = "*BOUNTIES:*\n";
       var expiry = "_" + bounty.eta + "_\n";
-      var jobMsg = bounty.jobs.reduce((str, job) => {
-        return (str +=
-          "*" +
-          job.type +
-          ":*\n`\t\t\t" +
-          job.rewardPool.join(",\n\t\t\t") +
-          "`\n");
-      }, "");
+      if (bounty.jobs) {
+        var jobMsg = bounty.jobs.reduce((str, job) => {
+          return (str +=
+            "*" +
+            job.type +
+            ":*\n`\t\t\t" +
+            job.rewardPool.join(",\n\t\t\t") +
+            "`\n");
+        }, "");
 
-      if (Callback) {
-        Callback(title + expiry + jobMsg);
-      } else {
-        ctx.replyWithMarkdown(title + expiry + jobMsg);
+        if (Callback) {
+          Callback(title + expiry + jobMsg);
+        } else {
+          ctx.replyWithMarkdown(title + expiry + jobMsg);
+        }
       }
     });
   },
@@ -1502,9 +1509,6 @@ const Reply = {
         ])
       )
     );
-  },
-  newTrader: (trader, userId, bot) => {
-    /** NOTIFY USERS ABOUT TRADER ITEMS */
   }
 };
 

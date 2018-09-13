@@ -509,7 +509,7 @@ const Util = {
       case "Secondary":
       case "Melee":
       case "Primary":
-        return Util.translateWeapon(item); //TODO mod translation
+        return Util.translateWeapon(item);
       case "Warframes":
       case "Pets":
       case "Sentinels":
@@ -521,7 +521,9 @@ const Util = {
   translateOther: item => {
     var info = item
       ? (item.description
-          ? "\n\t\t\t_" + item.description.replace(/\<([^>]+)\>/g, "") + "_"
+          ? "\n\t\t\t_" +
+            item.description.replace(/\<([^>]+)\>/g, "").replace(/[*`_]/g, "") +
+            "_"
           : "") +
         (item.polarity
           ? "\n\t\t\tPolarity: `" + item.polarity.replace("_", " ") + "`"
@@ -712,7 +714,7 @@ const Util = {
       let data = JSON.stringify(stats, null, 2);
       fs.writeFile(statsFile, data, err => {
         if (err) console.log(err);
-        console.log(Util.getNow(), "Alerts written to stats file");
+        // console.log(Util.getNow(), "Alerts written to stats file");
       });
     });
   },

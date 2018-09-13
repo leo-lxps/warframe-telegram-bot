@@ -6,12 +6,13 @@
   "dependencies": {
     "moment": "latest",
     "node-cron": "^1.2.1",
+    "plotly": "^1.0.6",
     "request": "latest",
     "telegraf": "latest",
     "telegraf-command-parts": "^1.0.3",
-    "telegraf-session-local": "0.0.5",
-    "warframe-items": "^1.29.0",
-    "warframe-patchlogs": "^1.49.0"
+    "telegraf-session-local": "0.0.6",
+    "warframe-items": "latest",
+    "warframe-patchlogs": "latest"
   },
   "devDependencies": {},
   "scripts": {

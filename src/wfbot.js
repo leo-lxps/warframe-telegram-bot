@@ -249,11 +249,12 @@ cron.schedule(
         if (sessions.length < 1) return;
         sessions.forEach(session => {
           if (session.data.alertItems && session.data.user) {
+            /** PRINT ALERTS
             console.log(
               Util.getNow(),
               "Checking alerts for: ",
               session.data.user.username
-            );
+            ); */
             Reply.checkAlert(
               session.data.alertItems,
               session.data.user.id,
@@ -285,7 +286,7 @@ cron.schedule(
 );
 
 cron.schedule(
-  "5 15 * * *",
+  "2 15 * * *",
   function() {
     Util.getSessions(sessions => {
       if (sessions.length < 1) return;
@@ -295,7 +296,7 @@ cron.schedule(
           sessions.forEach(session => {
             if (session.data.user) {
               if (session.data.user.optIn) {
-                Reply.newTrader(trader, session.data.user.id, bot);
+                Reply.trader(undefined, undefined, session.data.user.id, bot);
               }
             }
           });
