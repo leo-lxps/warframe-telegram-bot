@@ -846,6 +846,27 @@ const Reply = {
 
       const argStr = ctx.state.command.args;
       const args = argStr.split(",").map(a => a.trim());
+      console.log(args.length);
+
+      if (
+        Util.parseTime(args[0]) &&
+        Util.parseTime(args[1]) &&
+        Util.parseTime(args[2])
+      ) {
+        Util.getSortie(sortie => {
+          var sortieMissions = sortie.variants.map(v => v.missionType);
+          sortieMissions.forEach((mission, i) => {
+            Reply.addTime(
+              ctx,
+              prevTimes,
+              mission,
+              args[i],
+              Util.isAssAss(mission) ? sortie.boss : undefined
+            );
+          });
+        });
+        return;
+      }
 
       if (args.length > 1 && args.length < 4) {
         const mission = args[0];
@@ -933,7 +954,7 @@ const Reply = {
           min +
           "m* and *" +
           sec +
-          "s* to databse."
+          "s* to database."
       );
     });
   },
@@ -1117,7 +1138,7 @@ const Reply = {
           if (Callback) {
             Callback(errMsg);
           } else if (editMessage) {
-            ctx.editMessageText(errMsg, dashBtn)
+            ctx.editMessageText(errMsg, dashBtn);
           } else {
             ctx.replyWithMarkdown(errMsg);
           }
@@ -1137,12 +1158,13 @@ const Reply = {
           "_\n" +
           "*Time*: " +
           (body.isDay ? "`Day`" : "`Night`") +
-          "\n" + body.shortString;
+          "\n" +
+          body.shortString;
 
         if (Callback) {
           Callback(body);
         } else if (editMessage) {
-          ctx.editMessageText(message, dashBtn)
+          ctx.editMessageText(message, dashBtn);
         } else {
           ctx.replyWithMarkdown(message, dashBtn);
         }
