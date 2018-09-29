@@ -11,7 +11,7 @@ Place your Telegram token in a file called `token.json`  in your root directory
 }
 ```` 
 
-To be able to use the admin commands create a `admins.json` file in root directory:
+To be able to use the admin commands create a `admins.json` file in your root directory:
 
 ````json
 [
