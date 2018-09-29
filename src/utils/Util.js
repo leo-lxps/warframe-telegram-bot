@@ -745,6 +745,23 @@ const Util = {
         console.log(Util.getNow(), "Trader written to stats file");
       });
     });
+  },
+  allMissions: Callback => {
+    var url = "https://api.warframestat.us/missionTypes";
+    request(
+      {
+        url: url,
+        json: true
+      },
+      function(error, response, body) {
+        if (error) console.log(error);
+        if (!body || !Util.IsJsonString(body)) {
+          Callback([]);
+          return;
+        }
+        Callback(Object.keys(body).map(key => body[key].value));
+      }
+    );
   }
 };
 

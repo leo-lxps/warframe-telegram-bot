@@ -5,4 +5,5 @@
 !/src/db/data.json
 !package.json
 !.gitignore
+!install.sh
 !LICENSE

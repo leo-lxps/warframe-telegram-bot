@@ -725,35 +725,32 @@ const Reply = {
     }
   },
   listMissions: (ctx, isEdit) => {
-    Util.getSortieInfo(sortieInfo => {
+    Util.allMissions(missions => {
       var missionsArr = [];
-
       Util.getAvgTimes(times => {
         Reply.listBosses(ctx, false, str => {
-          sortieInfo.endStates.forEach(state => {
-            state.regions.forEach(region => {
-              region.missions.forEach(mission => {
-                let ind = missionsArr.find(
-                  m => m.mission.toUpperCase() == mission.toUpperCase()
-                );
-                if (!ind) {
-                  var time = times.find(
-                    t => t.mission.toUpperCase() == mission.toUpperCase()
-                  );
-                  if (!Util.isAssAss(mission)) {
-                    missionsArr.push({
-                      mission: mission,
-                      time: time ? time.minutes + ":" + time.seconds : undefined
-                    });
-                  } else {
-                    missionsArr.push({
-                      mission: mission,
-                      bosses: str
-                    });
-                  }
-                }
-              });
-            });
+          missions.forEach(mission => {
+            let ind = missionsArr.find(
+              m => m.mission.toUpperCase() == mission.toUpperCase()
+            );
+            if (!ind) {
+              var time = times.find(
+                t => t.mission.toUpperCase() == mission.toUpperCase()
+              );
+              if (!Util.isAssAss(mission)) {
+                missionsArr.push({
+                  mission: mission,
+                  time: time
+                    ? time.minutes + ":" + ("0" + time.seconds).slice(-2)
+                    : undefined
+                });
+              } else {
+                missionsArr.push({
+                  mission: mission,
+                  bosses: str
+                });
+              }
+            }
           });
           var msg = missionsArr.reduce(
             (str, m) =>
@@ -763,7 +760,11 @@ const Reply = {
                 "_" +
                 (m.time ? " `(" + m.time + ")`" : "") +
                 (m.bosses
-                  ? " \n`|`\t\t\t" + m.bosses.split("\n").join("\n`|`\t\t\t")
+                  ? " \n`|`\t\t\t" +
+                    m.bosses
+                      .split("\n")
+                      .filter(Boolean)
+                      .join("\n`|`\t\t\t")
                   : "") +
                 "\n"),
             "*MISSIONS:*\n"
@@ -795,7 +796,9 @@ const Reply = {
             );
             bossesArr.push({
               boss: state.bossName,
-              time: time ? time.minutes + ":" + time.seconds : undefined
+              time: time
+                ? time.minutes + ":" + ("0" + time.seconds).slice(-2)
+                : undefined
             });
           }
         });
@@ -854,45 +857,40 @@ const Reply = {
           return;
         } else {
           Util.getSortieInfo(sortieInfo => {
-            var possibleMissions = [];
-            var possibleBosses = [];
+            Util.allMissions(possibleMissions => {
+              // var possibleMissions = [];
+              var possibleBosses = [];
 
-            sortieInfo.endStates.forEach(state => {
-              state.regions.forEach(region => {
-                region.missions.forEach(actualMission => {
-                  if (!possibleMissions.includes(actualMission.toUpperCase())) {
-                    possibleMissions.push(actualMission.toUpperCase());
-                  }
-                });
+              sortieInfo.endStates.forEach(state => {
+                if (!possibleBosses.includes(state.bossName.toUpperCase())) {
+                  possibleBosses.push(state.bossName.toUpperCase());
+                }
               });
-              if (!possibleBosses.includes(state.bossName.toUpperCase())) {
-                possibleBosses.push(state.bossName.toUpperCase());
+
+              const validMission = possibleMissions
+                .map(m => m.toUpperCase())
+                .includes(mission.toUpperCase());
+              const validTime = Util.parseTime(time);
+
+              if (!validMission) {
+                ctx.replyWithMarkdown("not a valid Mission: " + mission);
+                return;
+              } else if (!validTime) {
+                ctx.replyWithMarkdown(
+                  "not a valid Time: " + time + ", use format mm:ss "
+                );
+                return;
+              } else if (args.length == 3) {
+                if (!possibleBosses.includes(boss.toUpperCase())) {
+                  ctx.replyWithMarkdown("not a valid Boss: " + boss);
+                  return;
+                } else {
+                  Reply.addTime(ctx, prevTimes, mission, time, boss);
+                }
+              } else {
+                Reply.addTime(ctx, prevTimes, mission, time);
               }
             });
-
-            const validMission = possibleMissions.includes(
-              mission.toUpperCase()
-            );
-            const validTime = Util.parseTime(time);
-
-            if (!validMission) {
-              ctx.replyWithMarkdown("not a valid Mission: " + mission);
-              return;
-            } else if (!validTime) {
-              ctx.replyWithMarkdown(
-                "not a valid Time: " + time + ", use format mm:ss "
-              );
-              return;
-            } else if (args.length == 3) {
-              if (!possibleBosses.includes(boss.toUpperCase())) {
-                ctx.replyWithMarkdown("not a valid Boss: " + boss);
-                return;
-              } else {
-                Reply.addTime(ctx, prevTimes, mission, time, boss);
-              }
-            } else {
-              Reply.addTime(ctx, prevTimes, mission, time);
-            }
           });
         }
       } else {
@@ -945,6 +943,7 @@ const Reply = {
     var extra = Util.getItems(ctx.inlineQuery.query);
     var offset = parseInt(ctx.inlineQuery.offset || 0) * Reply.queryCount;
     var inlineObjects = [];
+    var inlinePhotos = [];
 
     if (ctx.inlineQuery.query == "") {
       inlineObjects.push({
@@ -970,7 +969,7 @@ const Reply = {
     } else {
       extra.forEach((item, i) => {
         if (item.wikiaThumbnail) {
-          inlineObjects.push({
+          inlinePhotos.push({
             type: "photo",
             id: "p" + i,
             photo_url: item.wikiaThumbnail,
@@ -1020,6 +1019,9 @@ const Reply = {
         }
       });
     }
+
+    inlineObjects = inlinePhotos.concat(inlineObjects);
+
     if (inlineObjects.length < 1) {
       const gifs = [
         "https://i.imgur.com/X8Z1NwC.gif",
@@ -1072,7 +1074,30 @@ const Reply = {
         cache_time: 0,
         next_offset: 50
       })
-      .catch(err => console.log(err));
+      .catch(err =>
+        ctx.answerInlineQuery([
+          {
+            type: "article",
+            id: "noitem",
+            title: "Ops, Sorry!",
+            description: "Error: " + err.description,
+            input_message_content: {
+              message_text: "Try another search query.",
+              parse_mode: "Markdown"
+            },
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "SEARCH",
+                    switch_inline_query_current_chat: ""
+                  }
+                ]
+              ]
+            }
+          }
+        ])
+      );
     // });
   },
   cetus: (ctx, Callback) => {
@@ -1083,7 +1108,14 @@ const Reply = {
         json: true
       },
       function(error, response, body) {
-        if (error) console.log(err);
+        if (error) {
+          const errMsg = "Could not load Cetus information.";
+          if (Callback) {
+            Callback(errMsg);
+          } else {
+            ctx.replyWithMarkdown(errMsg);
+          }
+        }
         if (!body || !Util.IsJsonString(body)) {
           Callback({});
           return;
@@ -1091,7 +1123,18 @@ const Reply = {
         if (Callback) {
           Callback(body);
         } else {
-          ctx.replyWithMarkdown(body.shortString);
+          var dashBtn = Telegraf.Extra.markdown().markup(m =>
+            m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
+          );
+          var message = Callback ? "" : "`>` *CETUS* `<`\n\n";
+          message +=
+            "_" +
+            body.timeLeft +
+            "_\n" +
+            "*Time*: " +
+            (body.isDay ? "`Day`" : "`Night`") +
+            "\n" + body.shortString;
+          ctx.replyWithMarkdown(message, dashBtn);
         }
       }
     );

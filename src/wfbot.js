@@ -188,6 +188,10 @@ bot.command("save", ctx => {
     Util.saveTrader(trader);
   });
 });
+bot.command("test", ctx => {
+  Util.addUser(ctx);
+  Util.allMissions();
+});
 
 // drops
 bot.on("inline_query", ctx => {
@@ -202,9 +206,13 @@ bot.on("callback_query", ctx => {
 
 bot.startPolling();
 
-// cron update 18 o'clock
+/**
+ * Sortie notification
+ * Checking from 18:00 to 18:05 every 10 seconds
+ *
+ */
 cron.schedule(
-  "*/30 1-5 18 * * *",
+  "*/10 0-5 18 * * *",
   function() {
     var now = Util.getNow();
     Util.getSessions(sessions => {
@@ -218,22 +226,15 @@ cron.schedule(
 
       Util.getSortie(sortie => {
         if (!sortie) return;
-        if (sortie.expired) {
-          sortieSend = false;
-          return;
-        } else if (!sortieSend) {
-          sortieSend = true;
-          console.log(now, "Sending new Sortie to:");
+        if (!Util.notified.includes(sortie.id) && !sortie.expired) {
           sessions.forEach(session => {
             const user = session.data.user;
             if (user.optIn) {
-              console.log(now, " | ", user.username);
+              console.log(Util.getNow(), " | ", user.username);
               Reply.sortie(0, sortie, 2, user.id, bot);
             }
           });
-          Util.saveSortie(sortie);
-        } else {
-          console.log(now, "New Sortie was send");
+          Util.addNotified(sortie.id);
         }
       });
     });
@@ -241,6 +242,11 @@ cron.schedule(
   true
 );
 
+/**
+ * Alerts notification
+ * Checking every 2 minutes
+ *
+ */
 cron.schedule(
   "*/2 * * * *",
   function() {
@@ -274,25 +280,19 @@ cron.schedule(
   true
 );
 
+/**
+ * Trader schedule
+ * Checking from 15:00 to 15:05 every 10 seconds
+ *
+ */
 cron.schedule(
-  "* * 24 * *",
-  function() {
-    if (Util.getNotified().length > 100) {
-      console.log(Util.getNow(), "cleaning old alerts...");
-      Util.notified.splice(0, 50);
-    }
-  },
-  true
-);
-
-cron.schedule(
-  "2 15 * * *",
+  "*/10 0-5 15 * * *",
   function() {
     Util.getSessions(sessions => {
       if (sessions.length < 1) return;
       Util.getTrader(trader => {
         if (!trader) return;
-        if (trader.active) {
+        if (trader.active && !Util.notified.includes(sortie.id)) {
           sessions.forEach(session => {
             if (session.data.user) {
               if (session.data.user.optIn) {
@@ -301,11 +301,28 @@ cron.schedule(
             }
           });
           Util.saveTrader(trader);
+          Util.addNotified(trader.id)
         } else {
           console.log(Util.getNow(), "Trader not active");
         }
       });
     });
+  },
+  true
+);
+
+/**
+ * Cleanup schedule
+ * Checking every 24 hours
+ *
+ */
+cron.schedule(
+  "* * 24 * *",
+  function() {
+    if (Util.getNotified().length > 100) {
+      console.log(Util.getNow(), "cleaning old alerts...");
+      Util.notified.splice(0, 50);
+    }
   },
   true
 );
