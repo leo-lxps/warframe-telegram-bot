@@ -177,21 +177,6 @@ bot.command("item", ctx => {
   Util.addUser(ctx);
   Reply.drops(ctx);
 });
-bot.command("save", ctx => {
-  Util.getInfo(alerts => {
-    Util.saveAlerts(alerts);
-  });
-  Util.getSortie(sortie => {
-    Util.saveSortie(sortie);
-  });
-  Util.getTrader(trader => {
-    Util.saveTrader(trader);
-  });
-});
-bot.command("test", ctx => {
-  Util.addUser(ctx);
-  Util.allMissions();
-});
 
 // drops
 bot.on("inline_query", ctx => {

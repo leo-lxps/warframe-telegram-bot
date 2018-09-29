@@ -585,6 +585,7 @@ const Reply = {
         inline_keyboard: [
           [
             { text: "TRADER", callback_data: "traderCallback" },
+            { text: "CETUS", callback_data: "cetusCallback" },
             {
               text: "SEARCH",
               switch_inline_query_current_chat: ""
@@ -630,6 +631,9 @@ const Reply = {
     } else if (btn == "eventsCallback") {
       ctx.answerCbQuery("Loading Events...");
       Reply.events(ctx, undefined, true);
+    } else if (btn == "cetusCallback") {
+      ctx.answerCbQuery("Loading Events...");
+      Reply.cetus(ctx, undefined, true);
     }
   },
   slap: ctx => {
@@ -1100,7 +1104,7 @@ const Reply = {
       );
     // });
   },
-  cetus: (ctx, Callback) => {
+  cetus: (ctx, Callback, editMessage) => {
     const url = "https://api.warframestat.us/pc/cetusCycle";
     request(
       {
@@ -1112,6 +1116,8 @@ const Reply = {
           const errMsg = "Could not load Cetus information.";
           if (Callback) {
             Callback(errMsg);
+          } else if (editMessage) {
+            ctx.editMessageText(errMsg, dashBtn)
           } else {
             ctx.replyWithMarkdown(errMsg);
           }
@@ -1120,20 +1126,24 @@ const Reply = {
           Callback({});
           return;
         }
+
+        var dashBtn = Telegraf.Extra.markdown().markup(m =>
+          m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
+        );
+        var message = Callback ? "" : "`>` *CETUS* `<`\n\n";
+        message +=
+          "_" +
+          body.timeLeft +
+          "_\n" +
+          "*Time*: " +
+          (body.isDay ? "`Day`" : "`Night`") +
+          "\n" + body.shortString;
+
         if (Callback) {
           Callback(body);
+        } else if (editMessage) {
+          ctx.editMessageText(message, dashBtn)
         } else {
-          var dashBtn = Telegraf.Extra.markdown().markup(m =>
-            m.inlineKeyboard([[m.callbackButton("DASHBOARD", "dashCallback")]])
-          );
-          var message = Callback ? "" : "`>` *CETUS* `<`\n\n";
-          message +=
-            "_" +
-            body.timeLeft +
-            "_\n" +
-            "*Time*: " +
-            (body.isDay ? "`Day`" : "`Night`") +
-            "\n" + body.shortString;
           ctx.replyWithMarkdown(message, dashBtn);
         }
       }
