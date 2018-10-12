@@ -34,6 +34,7 @@ npm install
 Start
 
 ````bash
+cd src
 node wfbot.js
 ````
 
