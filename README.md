@@ -55,3 +55,8 @@ node wfbot.js
 - optout - opt out of daily updates
 - admins - list of admins
 - time - ADMIN ONLY add time to times.json
+  
+  
+ ### Screenshots
+ 
+ ![Dashboard Screen](https://i.imgur.com/hK6AJQY.png)
